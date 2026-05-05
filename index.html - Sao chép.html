@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACC101 NEW SP26 — Ôn Thi Trắc Nghiệm</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --correct: #22c55e;
+    --wrong: #ef4444;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --gold: #f4c430;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sora', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(ellipse at 20% 20%, rgba(124,92,252,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(252,92,125,0.06) 0%, transparent 50%); pointer-events: none; z-index: 0; }
+  .container { max-width: 800px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+  .header { text-align: center; padding: 40px 0 30px; }
+  .header .badge { display: inline-block; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 3px; padding: 6px 16px; border-radius: 20px; margin-bottom: 16px; text-transform: uppercase; }
+  .header h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 800; background: linear-gradient(135deg, #fff 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; margin-bottom: 10px; }
+  .header p { color: var(--muted); font-size: 14px; font-weight: 300; }
+  .stats-bar { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 18px; flex: 1; min-width: 100px; text-align: center; }
+  .stat-num { font-family: 'Space Mono', monospace; font-size: 22px; font-weight: 700; color: var(--accent); }
+  .stat-num.correct-num { color: var(--correct); }
+  .stat-num.wrong-num { color: var(--wrong); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .progress-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; }
+  .progress-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+  .progress-info span:first-child { color: var(--muted); }
+  .progress-info span:last-child { font-family: 'Space Mono', monospace; color: var(--accent); }
+  .progress-bar { background: var(--border); border-radius: 10px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 10px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+  .question-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; margin-bottom: 20px; position: relative; overflow: hidden; animation: slideIn 0.4s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .question-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .q-number { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .q-text { font-size: 16px; font-weight: 600; line-height: 1.65; color: var(--text); margin-bottom: 28px; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 15px 20px; color: var(--text); font-family: 'Sora', sans-serif; font-size: 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 14px; transition: all 0.2s ease; text-align: left; width: 100%; line-height: 1.5; }
+  .option-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(124,92,252,0.08); transform: translateX(4px); }
+  .option-btn:disabled { cursor: default; }
+  .option-label { min-width: 32px; height: 32px; background: var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; flex-shrink: 0; transition: all 0.2s; margin-top: 1px; }
+  .option-btn.correct { background: rgba(34,197,94,0.12); border-color: var(--correct); animation: correctPop 0.4s ease; }
+  .option-btn.correct .option-label { background: var(--correct); color: white; }
+  @keyframes correctPop { 0% { transform: scale(1); } 40% { transform: scale(1.02); } 100% { transform: scale(1); } }
+  .option-btn.wrong { background: rgba(239,68,68,0.1); border-color: var(--wrong); animation: wrongShake 0.4s ease; }
+  .option-btn.wrong .option-label { background: var(--wrong); color: white; }
+  @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+  .option-btn.show-correct { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.5); }
+  .option-btn.show-correct .option-label { background: rgba(34,197,94,0.4); color: white; }
+  .feedback { border-radius: 14px; padding: 18px 22px; margin-top: 16px; display: none; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .feedback.correct-fb { display: block; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); }
+  .feedback.wrong-fb { display: block; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); }
+  .feedback-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .feedback-title.correct-title { color: var(--correct); }
+  .feedback-title.wrong-title { color: var(--wrong); }
+  .feedback-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .next-btn { display: none; width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 14px; color: white; font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 16px; transition: all 0.2s; letter-spacing: 0.5px; }
+  .next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,92,252,0.4); }
+  .next-btn.visible { display: block; }
+  .controls { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+  .ctrl-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 18px; color: var(--muted); font-family: 'Sora', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+  .ctrl-btn:hover, .ctrl-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(124,92,252,0.08); }
+  .completion { display: none; text-align: center; padding: 60px 20px; animation: slideIn 0.5s ease; }
+  .completion.visible { display: block; }
+  .completion .trophy { font-size: 72px; margin-bottom: 20px; animation: bounce 1s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+  .completion h2 { font-size: 36px; font-weight: 800; background: linear-gradient(135deg, var(--gold), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px; }
+  .completion p { color: var(--muted); margin-bottom: 30px; }
+  .score-big { font-family: 'Space Mono', monospace; font-size: 64px; font-weight: 700; background: linear-gradient(135deg, var(--correct), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 30px; }
+  .restart-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 14px; color: white; font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 600; padding: 16px 40px; cursor: pointer; transition: all 0.2s; }
+  .restart-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(124,92,252,0.5); }
+  .particle { position: fixed; width: 8px; height: 8px; border-radius: 2px; pointer-events: none; z-index: 999; animation: fall linear forwards; }
+  @keyframes fall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+  @media (max-width: 600px) { .question-card { padding: 20px; } .q-text { font-size: 14px; } .option-btn { font-size: 13px; padding: 12px 14px; } .stats-bar .stat { min-width: 70px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="badge">✦ Quizlet Mode ✦</div>
+    <h1>ACC101 NEW SP26<br>Ôn Thi Cuối Kỳ</h1>
+    <p>234 câu hỏi trắc nghiệm · Click đáp án để kiểm tra</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num" id="totalStat">234</div><div class="stat-label">Tổng câu</div></div>
+    <div class="stat"><div class="stat-num" id="doneStat">0</div><div class="stat-label">Đã trả lời</div></div>
+    <div class="stat"><div class="stat-num correct-num" id="correctStat">0</div><div class="stat-label">Đúng ✓</div></div>
+    <div class="stat"><div class="stat-num wrong-num" id="wrongStat">0</div><div class="stat-label">Sai ✗</div></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-info"><span>Tiến độ</span><span id="progressText">0 / 234</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn" onclick="shuffleQuestions()" id="shuffleBtn">🔀 Xáo trộn</button>
+    <button class="ctrl-btn" onclick="resetQuiz()" id="resetBtn">↺ Bắt đầu lại</button>
+    <button class="ctrl-btn" id="modeBtn" onclick="toggleMode()">📖 Chỉ câu sai</button>
+  </div>
+
+  <div id="quizArea">
+    <div class="question-card" id="questionCard">
+      <div class="q-number" id="qNumber">CÂU 1 / 234</div>
+      <div class="q-text" id="qText"></div>
+      <div class="options" id="optionsContainer"></div>
+      <div class="feedback" id="feedback">
+        <div class="feedback-title" id="feedbackTitle"></div>
+        <div class="feedback-body" id="feedbackBody"></div>
+      </div>
+    </div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Câu tiếp theo →</button>
+  </div>
+
+  <div class="completion" id="completionScreen">
+    <div class="trophy">🏆</div>
+    <h2>Hoàn Thành!</h2>
+    <p>Bạn đã hoàn thành toàn bộ bộ câu hỏi ACC101 NEW SP26</p>
+    <div class="score-big" id="finalScore">0%</div>
+    <p id="finalDetail" style="margin-bottom:30px;color:#888"></p>
+    <button class="restart-btn" onclick="resetQuiz()">Ôn lại từ đầu</button>
+  </div>
+</div>
+
+<script>
+const ALL_QUESTIONS = [
+  {q:"At the beginning of January, Thomas Law Center's ledger reflected a normal balance of $52,000 for accounts receivable. During January, the company collected $14,800 from customers on account and provided additional services to customers on account totaling $12,500. Additionally, one customer paid Thomas $5,000 for services to be provided in the future. At the end of January, the balance in the accounts receivable account should be:",opts:["$54,700","$49,700","$47,000","$64,500"],ans:1},
+  {q:"When bonds are issued at a premium, the stated interest rate is:",opts:["Lower than the market rate","Equal to the market rate","Higher than the market rate","Unrelated to the market rate"],ans:2},
+  {q:"Which of the following normally reduces retained earnings?",opts:["Net income earned during the year","Declaration of cash dividends","Issuance of additional common stock","Stock split"],ans:1},
+  {q:"When a corporation issues par value stock at its par value, what is the primary effect on the company's accounting equation?",opts:["Assets decrease and Equity increases","Assets increase and Liabilities decrease","Assets increase and Equity increases","Liabilities increase and Equity decreases"],ans:2},
+  {q:"What is the primary role of a registrar in a corporation?",opts:["To assist investors in trading company shares on the stock exchange","To maintain a list of stockholders and handle dividend payments","To issue physical stock certificates for all public companies","To transfer shares between companies during mergers"],ans:1},
+  {q:"Which of the following is an advantage of the corporate form of organization?",opts:["Double taxation","Limited liability of stockholders","Mutual agency of owners","Unlimited liability of owners"],ans:1},
+  {q:"Which of the following best describes 'known liabilities'?",opts:["Obligations whose amounts and timing are uncertain","Obligations created only through litigation","Obligations that are measurable and certain, such as accounts payable or notes payable","Obligations payable only at liquidation"],ans:2},
+  {q:"If net income is $50,000 and dividends are $10,000, retained earnings will:",opts:["Increase by $40,000","Increase by $60,000","Decrease by $40,000","Decrease by $60,000"],ans:0},
+  {q:"When ending inventory is overstated:",opts:["Net income is overstated","Net income is understated","COGS is overstated","Assets are understated"],ans:0},
+  {q:"Sales discounts under perpetual system:",opts:["Reduce inventory cost","Reduce revenue received","Increase sales revenue","Increase accounts receivable"],ans:1},
+  {q:"Perpetual system advantages include:",opts:["Real-time inventory tracking","Lower bookkeeping costs","Simpler periodic calculation","Ignoring cost of goods sold"],ans:0},
+  {q:"On September 1, Hoa Binh Company borrows $10,000 from ACB Bank by signing a 60-day, 6% note. What is the correct journal entry to record the payment of the note at maturity?",opts:["Debit Notes Payable $10,000; Credit Cash $10,000","Debit Notes Payable $10,000; Credit Interest Expense $100; Credit Cash $9,900","Debit Notes Payable $10,000; Debit Interest Expense $100; Credit Cash $10,100","Debit Interest Expense $100; Credit Notes Payable $10,100"],ans:2},
+  {q:"Stock that does not have a stated value in the corporate charter is referred to as:",opts:["Par Value Stock","Common Stock","Stated Value Stock","No-Par Value Stock"],ans:3},
+  {q:"What is recorded when a corporation issues stock at a premium?",opts:["Paid-in capital in excess of par value is reported as revenue","The excess amount over par value is listed under liabilities","Paid-in capital in excess of par value is reported as part of equity","The premium is recorded under operating expenses"],ans:2},
+  {q:"What is the bond interest rate called, which is also known as the coupon rate or stated rate?",opts:["Market rate","Premium rate","Contract rate","Discount rate"],ans:2},
+  {q:"Which of the following statements is true regarding bond interest?",opts:["Interest on bonds is tax deductible","Interest on bonds is not tax deductible","Dividends to stockholders are tax deductible","Bonds do not have to be repaid"],ans:0},
+  {q:"A company using a periodic inventory system had a beginning inventory of $20,000. During the period, they purchased merchandise worth $60,000. At the end of the period, the physical count of inventory was $15,000. Calculate the cost of goods sold for the period.",opts:["$75,000","$65,000","$60,000","$55,000"],ans:1},
+  {q:"All of the following statements regarding long-term liabilities are true EXCEPT:",opts:["Liabilities not expected to be paid within one year are reported as long-term liabilities","Long-term liabilities include long-term notes payable, warranty liabilities, lease liabilities, and bonds payable","Liabilities that do not have a fixed due date, but are payable on demand, are reported as long-term liabilities","Long-term liabilities can be reported on the balance sheet in a single total or in multiple categories"],ans:2},
+  {q:"What is the tax advantage of bond interest payments?",opts:["Bond interest payments are exempt from taxation","Bond interest payments are taxed at a lower rate than equity earnings","Bond interest payments are tax deductible, reducing taxable income","Bond interest payments are tax-free for the company"],ans:2},
+  {q:"A corporation's distribution of additional shares of its own stock to its stockholders without the receipt of any payment in return is called a:",opts:["Stock dividend","Stock subscription","Premium on stock","Discount on stock"],ans:0},
+  {q:"Which accounting principle is primarily supported by the lower of cost or market (LCM) rule?",opts:["Matching principle","Historical cost principle","Consistency principle","Conservatism principle"],ans:3},
+  {q:"Shares of stock that have been issued by the corporation and are currently in the hands of investors are called:",opts:["Authorized Stock","Treasury Stock","Selling (issuing) Stock","Outstanding Stock"],ans:3},
+  {q:"If a bond has a contract rate of 8% on a $1,000 bond, how much annual interest will it pay?",opts:["$100","$80","$40","$1,000"],ans:1},
+  {q:"What is the primary disadvantage of bond financing related to a company's return on equity?",opts:["Bonds increase the company's return on equity","Bonds can decrease the company's return on equity if the company has lower income","Bonds allow the company to withdraw dividends freely","Bonds do not require interest payments"],ans:1},
+  {q:"What is the total preferred stock value on Dillon's balance sheet for the issuance of preferred stock at $100 par value for 50 shares?",opts:["$1,000","$5,000","$6,000","$10,000"],ans:1},
+  {q:"A corporation issued 10,000 shares of its $5 par value common stock in exchange for equipment that has a market value of $120,000. The entry to record this transaction would include:",opts:["A debit to Common Stock for $50,000","A debit to Land for $50,000","A credit to Equipment for $50,000","A credit to Paid-in Capital in Excess of Par Value, Common Stock for $70,000"],ans:3},
+  {q:"A corporation sold 14,000 shares of its $1 par value common stock at a cash price of $13 per share. The entry to record this transaction would include:",opts:["A debit to Paid-in Capital in Excess of Par Value for $182,000","A debit to Cash for $14,000","A credit to Common Stock for $182,000","A credit to Common Stock for $14,000"],ans:3},
+  {q:"Which statement about no-par value stock is correct?",opts:["It must have a stated value","It cannot be legally issued in most states","It is not assigned a value per share by the charter","It requires a minimum dividend"],ans:2},
+  {q:"The total value of the owners' stake in the corporation is best represented by:",opts:["Market Capitalization","Authorized Capital","Paid-In Capital","Stockholders' Equity"],ans:3},
+  {q:"What is the primary purpose of a purchase discount?",opts:["To increase sales","To encourage prompt payment","To inflate revenue","To reduce cost of goods sold"],ans:1},
+  {q:"Which of the following statements regarding liabilities is NOT true?",opts:["A liability is a probable future payment of assets or services","Unearned future wages to be paid to employees should be recorded as liabilities","For a liability to be reported, it must be a present obligation from a past transaction and requires a future payment","Information about liabilities is more useful when the balance sheet identifies them as either current or long term"],ans:1},
+  {q:"Companies report the cost of stock options in the:",opts:["Statement of cash flows","Balance sheet","Statement of retained earnings","Income statement"],ans:3},
+  {q:"A discount on bonds payable:",opts:["Occurs when a company issues bonds with a contract rate less than the market rate","Occurs when a company issues bonds with a contract rate more than the market rate","Increases the Bond Payable account","Decreases the total bond interest expense"],ans:0},
+  {q:"A company received cash proceeds of $206,948 on a bond issue with a par value of $200,000. The difference between par value and issue price for this bond is recorded as a:",opts:["Credit to Interest Income","Credit to Premium on Bonds Payable","Credit to Discount on Bonds Payable","Debit to Premium on Bonds Payable"],ans:1},
+  {q:"A bond is issued at par value when:",opts:["The bond pays no interest","The bond is not between interest payment dates","Straight line amortization is used by the company","The market rate of interest is the same as the contract rate"],ans:3},
+  {q:"Accounts payable are amounts owed to suppliers for products and/or services purchased on credit. Which of these is correct?",opts:["Amounts owed to suppliers for products and/or services purchased on credit","Estimated liabilities","Long-term liabilities","Always payable within 60 days"],ans:0},
+  {q:"An adjusting entry for unearned revenue affects:",opts:["Assets and expenses","Assets and revenues","Revenue and Liabilities","Expenses and Liabilities"],ans:2},
+  {q:"Statement of retained earnings does not include:",opts:["Dividends paid","Transfer to general reserves","Prior period adjustments","Revaluation of long-term investments"],ans:3},
+  {q:"The inventory system that updates the accounting records for merchandise transactions only at the end of a period is called:",opts:["FIFO inventory system","Specific identification inventory system","Weighted inventory system","Periodic inventory system"],ans:3},
+  {q:"The amount due on the maturity date of a $12,000, 60-day, 8% note receivable is:",opts:["$6,000","$12,000","$160","$12,160"],ans:3},
+  {q:"How is Stock dividend different from cash dividend?",opts:["Stock dividend increases cash account balance of the corporation","Stock dividend reduces equity","Stock dividend reduces assets","Stock dividend does not reduce assets and equity"],ans:3},
+  {q:"Shareholder's equity does not include:",opts:["Reserves","Retained earnings","Share capital","Contingent assets"],ans:3},
+  {q:"The Company obtained a machine for $10,000 on January 1, 2019. It estimates the salvage value of $2,000 and useful life of 8 years. What is the accumulated depreciation as at 31 December 2020 using double declining balance method?",opts:["$1,000","$2,343.75","$2,500","$4,375"],ans:3},
+  {q:"A business completed these transactions: (1) Investing $20,000 cash and a building valued at $100,000. (2) Purchased $10,000 of a truck on credit. (3) Paid $20,000 cash for raw material. (4) Sold products and collected $40,000 cash. What was the balance of the cash account after these transactions were posted?",opts:["$130,000","$30,000","$40,000","$140,000"],ans:2},
+  {q:"On January 1, a company issues bonds with a par value of $300,000. The bonds mature in 5 years. The contract rate is 9%, interest paid semiannually. The market rate is 8% and bonds are sold for $312,177. The journal entry to record the issuance is:",opts:["Debit Cash $312,177; Credit Discount on Bonds Payable $12,177; Credit Bonds Payable $300,000","Debit Cash $300,000; Debit Premium on Bonds Payable $12,177; Credit Bonds Payable $312,177","Debit Bonds Payable $300,000; Debit Bond Interest Expense $12,177; Credit Cash $312,177","Debit Cash $312,177; Credit Premium on Bonds Payable $12,177; Credit Bonds Payable $300,000"],ans:3},
+  {q:"A company purchased merchandise on account for $12,000 with terms 1/10, n/30. They paid the amount due after the discount period. What is the amount paid for the merchandise?",opts:["$11,880","$11,760","$12,120","$12,000"],ans:3},
+  {q:"A company purchased merchandise for $8,000 with terms 3/15, n/45. They returned $1,000 of the merchandise before making the payment within the discount period. What is the amount paid for the merchandise?",opts:["$6,790","$6,930","$6,900","$7,770"],ans:0},
+  {q:"A company using the perpetual inventory system sold merchandise for $12,000 with terms 2/10, n/30. The cost of the merchandise sold was $8,000. The customer returned $2,000 of the merchandise before paying within the discount period. What is the amount paid by the customer?",opts:["$9,400","$9,600","$9,800","$9,000"],ans:2},
+  {q:"At the beginning of January, a Law company has a normal balance of $50,000 for accounts receivable. During January, the company collected $14,000 from customers and provided additional services to customers on account totaling $12,000. Additionally, company used service of $1,000 on credit. At the end of January, the balance in the accounts receivable account should be:",opts:["$49,000","$48,000","$36,000","$26,000"],ans:1},
+  {q:"A company's Office Supplies account shows a beginning balance of $600 and an ending balance of $400. If office supplies expense for the year is $3,100, what amount of office supplies was purchased during the period?",opts:["$2,700","$2,900","$3,300","$3,500"],ans:1},
+  {q:"John set up a new business: (1) Open new restaurant investing $30,000 cash and $10,000 equipment. (2) Purchased $1,000 of kitchen utility on credit. (3) Paid $1,500 cash for staff salary. (4) Service meals and collected $4,000 cash. What was the balance of the cash account after these transactions?",opts:["$46,500","$42,500","$45,500","$32,500"],ans:3},
+  {q:"On December 1, A-Corp Company signed a 90-day, 4% note payable with a face value of $45,000. What amount of interest expense is accrued at December 31 on the note?",opts:["$0","$150","$300","$450"],ans:1},
+  {q:"Cooley company's accounts payable at the beginning of March was $1,000. During March, Cooley purchased from Dell on account totaling $2,000. Also, Cooley paid $500 on its accounts payable for Dell company. Additionally, Cooley was paid $8,000 by a customer for future services. What is the balance in accounts payable at the end of March?",opts:["$2,500","$10,500","$8,000","$12,500"],ans:0},
+  {q:"A company's inventory: Item X: Cost $20, Market $18; Item Y: Cost $25, Market $27; Item Z: Cost $30, Market $28. Using the lower of cost or market method, what is the total value of inventory?",opts:["$70","$72","$71","$77"],ans:2},
+  {q:"If a company's beginning inventory for the current year was understated by $5,000, what would be the impact on the cost of goods sold and net income for the current year?",opts:["COGS understated by $5,000, Net income overstated by $3,500","COGS overstated by $5,000, Net income understated by $5,000","COGS understated by $5,000, Net income overstated by $5,000","COGS overstated by $5,000, Net income understated by $3,500"],ans:2},
+  {q:"If equity is $300,000 and liabilities are $192,000, then assets equal:",opts:["$108,000","$192,000","$300,000","$492,000"],ans:3},
+  {q:"A company had inventory of 5 units at $20 each on November 1. On November 2, it purchased 10 units at $22 each. On November 6, it purchased 6 units at $25 each. On November 8, it sold 18 units. Using the LIFO perpetual inventory method, what was the cost of the 18 units sold?",opts:["$395","$410","$450","$510"],ans:1},
+  {q:"On April 30, Holden Company had Accounts Receivable balance of $18,000. During May, total credits to Accounts Receivable were $52,000 from customer payments. The May 31 Accounts Receivable balance was $13,000. What was the amount of credit sales during May?",opts:["$5,000","$47,000","$52,000","$57,000"],ans:1},
+  {q:"During February, Hoffer Company had cash receipts of $7,500 and cash disbursements of $8,600. The February 28 cash balance was $1,800. What was the January 31 beginning cash balance?",opts:["$700","$1,100","$2,900","$0"],ans:2},
+  {q:"If assets are $199,000 and liabilities are $132,000, then equity equals:",opts:["$32,000","$67,000","$99,000","$131,000"],ans:1},
+  {q:"Flash has beginning equity of $257,000, net income of $51,000, withdrawals of $40,000 and investments by owners of $6,000. Its ending equity is:",opts:["$223,000","$240,000","$268,000","$274,000"],ans:3},
+  {q:"How does Lead Company record the billing of a client for $15,000 of service completed?",opts:["Increase accounts receivable, decrease accounts payable","Increase accounts receivable, increase accounts payable","Increase accounts receivable, increase cash","Increase accounts receivable, increase revenue"],ans:3},
+  {q:"If the assets of a business increased $89,000 during a period and its liabilities increased $67,000 during the same period, equity must have:",opts:["Increased $22,000","Decreased $22,000","Increased $89,000","Decreased $156,000"],ans:0},
+  {q:"Lomax Enterprises purchased a depreciable asset for $20,000 on January 1, 2008. The asset will be depreciated using the straight-line method over its four-year useful life. Assuming the asset's salvage value is $2,000, what will be the amount of accumulated depreciation on this asset on June 30, 2011?",opts:["$18,000","$4,500","$13,500","$15,750"],ans:3},
+  {q:"The following transactions occurred during July. What was the amount of revenue for July? (1) Received $900 cash for services. (2) Received $2,200 cash investment from owner. (3) Received $750 partial payment of accounts receivable. (4) Provided services on credit, $375. (5) Borrowed $6,000 from bank. (6) Received $1,250 cash for services to be rendered next year.",opts:["$900","$1,275","$2,525","$3,275"],ans:1},
+  {q:"If assets are $365,000 and equity is $120,000, then liabilities are:",opts:["$120,000","$245,000","$365,000","$485,000"],ans:1},
+  {q:"At the beginning of 2009, Owner's Capital = $50,000. During 2009, revenues = $46,000 and expenses = $30,000. Owner's withdrawals for the year totaled $20,000. The balance in the owner's capital account at the end of 2009 would be:",opts:["$66,000","$86,000","-$4,000","$46,000"],ans:3},
+  {q:"A company has sales of $350,000 and estimates that 0.7% of its sales are uncollectible. The estimated amount of bad debts expense is:",opts:["$350","$2,450","$3,450","$300"],ans:1},
+  {q:"A company has: Item A: Cost $12, Market $10; Item B: Cost $8, Market $9; Item C: Cost $15, Market $14. Using the lower of cost or market method, what is the total value of the inventory?",opts:["$34","$36","$37","$32"],ans:3},
+  {q:"A company sold merchandise on account for $15,000 with terms 3/10, n/30. The cost of merchandise sold was $11,000. The customer paid within the discount period. What is the journal entry to record the receipt of payment?",opts:["Debit Cash $14,550, Credit Accounts Receivable $14,550","Debit Cash $15,000, Credit Sales Discounts $450, Credit Accounts Receivable $15,000","Debit Cash $14,550, Credit Sales Discounts $450, Credit Accounts Receivable $14,450","Debit Cash $14,550, Debit Sales Discounts $450, Credit Accounts Receivable $15,000"],ans:3},
+  {q:"A company issued 8%, 15-year bonds with a par value of $600,000 that pay interest semiannually. The current market rate is 8%. The journal entry to record each semiannual interest payment is:",opts:["Debit Bond Interest Expense $24,000; Credit Cash $24,000","Debit Bond Interest Expense $48,000; Credit Cash $48,000","Debit Bond Interest Payable $24,000; Credit Cash $24,000","Debit Bond Interest Expense $600,000; Credit Cash $600,000"],ans:0},
+  {q:"The balance in Tee Tax Services' office supplies account on February 1 and February 28 was $1,200 and $375, respectively. If the office supplies expense for the month is $1,900, what amount of office supplies was purchased during February?",opts:["$1,075","$1,500","$1,525","$2,325"],ans:0},
+  {q:"A company uses the perpetual inventory system and the LIFO method. Beginning inventory: 50 units at $18; Purchases: 100 units at $20; Sales: 120 units at $35. Calculate the gross profit using the LIFO method.",opts:["$1,400","$2,360","$1,840","$2,900"],ans:2},
+  {q:"A company uses the perpetual inventory system and weighted average method. Beginning inventory: 150 units at $10; Purchases: 200 units at $12; Sales: 250 units. Calculate the cost of ending inventory using weighted average method.",opts:["$1,120","$1,200","$1,502","$1,114"],ans:3},
+  {q:"Zed Bennett opened an art gallery: (1) Invested $40,000 cash and $18,000 equipment. (2) Purchased $70 office supplies on credit. (3) Paid $1,200 cash for receptionist's salary. (4) Collected $4,500 cash commission. (5) Billed client $200 on account. What was the balance of the cash account after these transactions?",opts:["$12,230","$12,430","$43,300","$43,430"],ans:2},
+  {q:"A company has: Service Revenue $100,000, Rent Expense $20,000, Salaries Expense $30,000, and Dividends $10,000. What is the closing entry for the expense accounts?",opts:["Debit Income Summary $50,000; Credit Rent Expense $20,000, Credit Salaries Expense $30,000","Debit Income Summary $100,000; Credit Service Revenue $100,000","Debit Rent Expense $20,000, Debit Salaries Expense $30,000; Credit Income Summary $50,000","Debit Dividends $10,000; Credit Income Summary $10,000"],ans:0},
+  {q:"Hutter Corporation declared a $0.50 per share cash dividend. The company has 20,000 shares authorized, 9,000 shares issued, and 8,000 shares outstanding. The journal entry to record the dividend declaration is:",opts:["Debit Retained Earnings $4,000; Credit Common Dividends Payable $4,000","Debit Common Dividends Payable $4,000; Credit Cash $4,000","Debit Retained Earnings $4,500; Credit Common Dividends Payable $4,500","Debit Common Dividends Payable $4,500; Credit Cash $4,500"],ans:0},
+  {q:"A company's board of directors votes to declare a cash dividend of $0.50 per share on its 24,000 common shares outstanding. The journal entry to record the payment of the cash dividend is:",opts:["Debit Dividend Expense $12,000; Credit Cash $12,000","Debit Dividend Expense $12,000; Credit Common Dividend Payable $12,000","Debit Common Dividend Payable $12,000; Credit Cash $12,000","Debit Retained Earnings $12,000; Credit Common Dividend Payable $12,000"],ans:2},
+  {q:"Justin Corporation uses weighted-average perpetual inventory: Aug 2, 10 units at $12; Aug 18, 15 units at $14; Aug 29, 12 units sold. What was the cost of goods sold for the sale on August 29?",opts:["$148.00","$150.50","$158.40","$210.00"],ans:2},
+  {q:"A company had beginning retained earnings of $670,000, net income of $65,000, and paid cash dividends of $46,250. The ending balance in retained earnings equals:",opts:["$18,750","$577,500","$623,750","$688,750"],ans:3},
+  {q:"A painting is offered for sale at $240,000, assessed at $215,000, purchaser believes it is worth $235,000 but purchases it for $225,000. According to historical cost principle, the purchaser records this painting at:",opts:["$240,000","$215,000","$235,000","$225,000"],ans:3},
+  {q:"A cash outflow from the company into its owner is called a(n):",opts:["Liability","Withdrawal","Expense","Profit"],ans:1},
+  {q:"Retained earnings:",opts:["Generally consists of a company's cumulative net income less any net losses and dividends declared since its inception","Can only be appropriated by setting aside a cash fund","Represent an amount of cash available to pay shareholders","Are never adjusted for anything other than net income or dividends"],ans:0},
+  {q:"In the closing process, which type of account is directly affected by the transfer of net income from Income Summary?",opts:["Revenue accounts","Expense accounts","Withdrawals account","Owner's Capital account"],ans:3},
+  {q:"In many states, the minimum amount that stockholders must contribute to the corporation to protect its creditors is called the:",opts:["Par value of preferred","Minimum legal capital","Premium capital","Stated value"],ans:1},
+  {q:"Stated value of no-par stock is:",opts:["Another name for redemption value","An amount assigned to par value stock by the state of incorporation","The market value of the stock on the date of issuance","An amount assigned to no-par stock by the corporation's board of directors"],ans:3},
+  {q:"The Discount on Bonds Payable account is:",opts:["A liability","A contra liability","An expense","A contra expense"],ans:1},
+  {q:"The date the directors vote to declare and pay a dividend is called the:",opts:["Date of stockholders' meeting","Date of declaration","Date of record","Date of payment"],ans:1},
+  {q:"Stockholders' equity consists of which of the following?",opts:["Long-term assets","Paid-in capital and retained earnings","Paid-in capital and par value","Retained earnings and cash"],ans:1},
+  {q:"When a corporation has only one class of stock, the stock is called:",opts:["Preferred stock","Common stock","Par value stock","Stated value stock"],ans:1},
+  {q:"Par value of a stock refers to the:",opts:["Issue price of the stock","Value assigned per share by the corporate charter","Market value of the stock on the date of the financial statements","Maximum selling price of the stock"],ans:1},
+  {q:"The total amount of cash and other assets received by a corporation from its stockholders in exchange for its stock is:",opts:["Always equal to its par value","Always equal to its stated value","Referred to as paid-in capital","Referred to as retained earnings"],ans:2},
+  {q:"A premium on common stock:",opts:["Occurs when a corporation sells its stock for more than par or stated value","Is the difference between par value and issue price when the amount paid is below par","Represents profit from issuing stock","Represents capital gain on sale of stock"],ans:0},
+  {q:"The difference between the amount received from issuing a note payable and the amount repaid at maturity is referred to as:",opts:["Interest","Principle","Face Value","Cash"],ans:0},
+  {q:"A bond sells at a discount when the:",opts:["Contract rate is above the market rate","Contract rate is equal to the market rate","Contract rate is below the market rate","Bond has a short-term life"],ans:2},
+  {q:"The right of common shareholders to purchase their proportional share of any common stock later issued by the corporation is called a:",opts:["Preemptive right","Proxy right","Right to call","Financial leverage"],ans:0},
+  {q:"All of the following are true of known liabilities EXCEPT:",opts:["Include accounts payable, notes payable, and payroll","Are obligations set by agreements, contracts, or laws","Are measurable","May depend on some future event occurring"],ans:3},
+  {q:"A class of stock that can usually be issued at any price without creating a minimum legal capital deficiency is called:",opts:["Convertible stock","No-par stock","Callable stock","Noncumulative stock"],ans:1},
+  {q:"Short-term notes payable:",opts:["Cannot replace an account payable","Can be issued in return for money borrowed from a bank","Are not negotiable","Are a conditional promise to pay"],ans:1},
+  {q:"When a company is obligated for sales taxes payable, it is reported as a(n):",opts:["Estimated liability","Long-term liability","Current liability","Business expense"],ans:2},
+  {q:"An advantage of bonds is:",opts:["Bonds do not affect owner control","Bonds require payment of par value at maturity","Bonds can decrease return on equity","Bond payments can be burdensome when income and cash flow are low"],ans:0},
+  {q:"Liability created by purchasing goods and services on credit are:",opts:["Accounts payable","Accounts receivable","Liabilities","Expenses"],ans:0},
+  {q:"Photometer Company paid off $30,000 of its accounts payable in cash. What would be the effects of this transaction on the accounting equation?",opts:["Assets $30,000 increase; liabilities no effect; equity $30,000 increase","Assets $30,000 decrease; liabilities $30,000 decrease; equity no effect","Assets $30,000 decrease; liabilities $30,000 increase; equity no effect","Assets no effect; liabilities $30,000 decrease; equity $30,000 increase"],ans:1},
+  {q:"How does Lead Company record the billing of a client for $15,000 of service completed?",opts:["+$15,000 accounts receivable, -$15,000 accounts payable","+$15,000 accounts receivable, +$15,000 accounts payable","+$15,000 accounts receivable, +$15,000 cash","+$15,000 accounts receivable, +$15,000 revenue"],ans:3},
+  {q:"Moffat Company has assets of $600,000, liabilities of $250,000, and equity of $350,000. What is the entry to record when Moffat Company bills a client for $25,000 of contract completed?",opts:["+$25,000 accounts receivable, -$25,000 accounts payable","+$25,000 accounts receivable, +$25,000 accounts payable","+$25,000 accounts receivable, +$25,000 cash","+$25,000 accounts receivable, +$25,000 revenue"],ans:3},
+  {q:"The balance in the prepaid insurance account before adjustment at the end of the year is $4,800, which represents the insurance premiums for four months paid on November 1. The adjusting entry required on December 31 is:",opts:["Debit Insurance Expense $2,400; Credit Prepaid Insurance $2,400","Debit Prepaid Insurance $2,400; Credit Insurance Expense $2,400","Debit Insurance Expense $1,200; Credit Prepaid Insurance $1,200","Debit Prepaid Insurance $1,200; Credit Insurance Expense $1,200"],ans:0},
+  {q:"Obligations to be paid within one year or the company's operating cycle, whichever is longer, are:",opts:["Current liabilities","Long-term liabilities","Current assets","Operating cycle liabilities"],ans:0},
+  {q:"Changes in retained earnings are commonly reported in the:",opts:["Statement of cash flows","Balance sheet","Statement of retained earnings","Income statement"],ans:2},
+  {q:"Changes in accounting estimates are:",opts:["Considered accounting errors","Reported as prior period adjustments","Accounted for with a cumulative catch-up adjustment","Extraordinary items","Accounted for in current and future periods"],ans:4},
+  {q:"Which of the following is NOT a step in the closing process?",opts:["Identify accounts for closing","Record and post the closing entries","Prepare a post-closing trial balance","Reconcile the accounts payable"],ans:3},
+  {q:"A company might buy a service or product on credit. 'On credit' implies that the cash payment will occur:",opts:["On buying day","On a later date","On previous day","No due date"],ans:1},
+  {q:"The accounting principle that requires accounting information to be based on actual cost instead of current value, is the:",opts:["Accounting equation","Cost principle","On-Going-concern principle","Accrual principle"],ans:1},
+  {q:"Provide descriptions for this transaction: Increase cash $1,000 and Increase equity $1,000",opts:["Investment of cash in business by owner OR performed services for cash","Investment of cash in business by owner","Performed services for cash","Collected cash from customers"],ans:0},
+  {q:"The contract between the bond issuer and the bondholders identifying the rights and obligations of the parties is called a(n):",opts:["Debenture","Bond indenture","Mortgage","Mortgage contract"],ans:1},
+  {q:"Provide descriptions for this transaction: Increase cash $4,000 and Increase Contributed Capital $4,000",opts:["Investment of cash in business by owner OR performed services for cash","Investment of cash in business by owner","Performed services for cash","Collected cash from customers"],ans:1},
+  {q:"Provide descriptions for this transaction: Debit office supplies $8,000 and Credit liability $8,000",opts:["Buying office supplies by cash $8,000","Buying office supplies on credit $8,000","Arrange office supplies contract on credit $8,000","Arrange office supplies contract by cash $8,000"],ans:1},
+  {q:"On November 1, Noah Company signed a 120-day, 6% note payable with a face value of $19,000. What is the adjusting entry for the accrued interest at December 31 on the note?",opts:["Debit Interest Expense $0; Credit Interest Payable $0","Debit Interest Payable $190; Credit Interest Expense $190","Debit Interest Expense $190; Credit Interest Payable $190","Debit Interest Expense $380; Credit Interest Payable $380"],ans:2},
+  {q:"On September 1, Deck Company signed a $50,000, 90-day, 8% note payable with Central Savings Bank. What is the journal entry that should be recorded by Deck upon maturity of the note?",opts:["Debit Interest Expense $1,000; Credit Interest Payable $1,000","Debit Notes Payable $50,000; Credit Interest Revenue $1,000; Credit Cash $49,000","Debit Cash $51,000; Credit Notes Receivable $51,000","Debit Notes Payable $50,000; Debit Interest Expense $1,000; Credit Cash $51,000"],ans:3},
+  {q:"On December 1, Jane signed a $25,000, 60-day, 4% note payable as replacement of an account payable with PwC Company. What is the journal entry that should be recorded upon signing the note?",opts:["Debit Accounts Receivable $25,000; Credit Notes Receivable $25,000","Debit Accounts Payable $25,000; Credit Notes Payable $25,000","Debit Accounts Payable $26,000; Credit Notes Payable $26,000","Debit Notes Payable $25,000; Debit Interest Expense $1,000; Credit Accounts Payable $26,000"],ans:1},
+  {q:"Amounts received in advance from customers for future products or services:",opts:["Are revenues","Increase income","Are Unearned revenues","Are not allowed under GAAP"],ans:2},
+  {q:"Provide descriptions for this transaction: Decrease cash $3,500 and Decrease equity $3,500",opts:["Withdraw cash from the business by owner OR paid cash for an expense","Withdraw cash from the business by owner","Paid cash for an expense","Collected cash from customers"],ans:0},
+  {q:"The buyer is responsible for the cost of shipping when goods are sold with the terms FOB:",opts:["Shipping board","Shipping point","Destination","On board"],ans:1},
+  {q:"A corporation's minimum legal capital is established by recording the par or stated value of the number of shares:",opts:["Issued","Authorized","Subscribed","Outstanding"],ans:0},
+  {q:"Items used in business operations, such as office pens and paper are several samples of:",opts:["Office expense","Office supplies","Office equipment","Prepayment"],ans:1},
+  {q:"All of the following statements regarding uncertainty in liabilities are true EXCEPT:",opts:["Liabilities can involve uncertainty in whom to pay","A company can create a liability with a known amount even when the holder may not be known until the maturity date","A company can have an obligation of a known amount but not know when it must be paid","A company only records liabilities when it knows whom to pay, when to pay, and how much to pay"],ans:3},
+  {q:"When applying the lower of cost or market (LCM) rule, which of the following is considered the 'market' value?",opts:["Replacement cost","Sales price","Cost of production","Original purchase price"],ans:0},
+  {q:"The costs of bringing a corporation into existence, including legal fees, promoter fees, and amounts paid to obtain a charter are called:",opts:["Minimum legal capital","Stock subscriptions","Organization expenses","Selling expenses"],ans:2},
+  {q:"The difference between a company's assets and its liabilities, or net assets, is:",opts:["Net income","Expense","Equity","Revenue"],ans:2},
+  {q:"Which of the following statements about unearned revenues is NOT true?",opts:["Also called deferred revenues","Also called collections in advance","Also called prepayments","Amounts to be received in the future from customers for delivery of products or services in the current period"],ans:3},
+  {q:"If a business sells $35,000,000 worth of advance tickets for the upcoming five concerts, the receipt of cash would be journalized as:",opts:["Debit Sales, Credit Unearned Revenue","Debit Unearned Revenue, Credit Sales","Debit Cash, Credit Unearned Revenue","Debit Accounts Receivable, Credit Cash"],ans:2},
+  {q:"Resources owned or controlled by a company that are expected to yield future benefits are:",opts:["Assets","Revenues","Liabilities","Owner's Equity"],ans:0},
+  {q:"Zion Company has assets of $600,000, liabilities of $250,000, and equity of $350,000. It buys office equipment on credit for $75,000. What would be the effects on the accounting equation?",opts:["Assets increase by $75,000 and expenses increase by $75,000","Assets increase by $75,000 and expenses decrease by $75,000","Liabilities increase by $75,000 and expenses decrease by $75,000","Assets increase by $75,000 and liabilities increase by $75,000"],ans:3},
+  {q:"Internal users of accounting information include:",opts:["Shareholders","Managers","Lenders","Suppliers"],ans:1},
+  {q:"A chart of accounts generally starts with which of the following types of accounts?",opts:["Asset accounts","Liability accounts","Expense accounts","Equity accounts"],ans:0},
+  {q:"Which of the following is a liability?",opts:["Account receivable","Account payable","Owner's capital","Owner's withdrawal"],ans:1},
+  {q:"If a company paid $38,000 of its accounts payable in cash, what was the effect on the assets, liabilities, and equity?",opts:["Assets decrease $38,000, liabilities decrease $38,000, equity decrease $38,000","Assets decrease $38,000, liabilities decrease $38,000, equity increase $38,000","Assets decrease $38,000, liabilities decrease $38,000, equity no change","No effect on the accounts"],ans:2},
+  {q:"Assets created by selling goods and services on credit are:",opts:["Accounts payable","Accounts receivable","Liabilities","Expenses"],ans:1},
+  {q:"A payment to an owner for personal use is called a(n):",opts:["Liability","Withdrawal","Expense","Contribution"],ans:1},
+  {q:"The properties used in operation activities of a business are called:",opts:["Revenue","Withdrawal","Assets","Expense"],ans:2},
+  {q:"Which of the following is NOT considered as a subcategory of owner's Equity?",opts:["Revenue","Withdrawal","Assets","Expense"],ans:2},
+  {q:"Which of the following is NOT a liability?",opts:["Account payable","Note payable","Short term loan","Short term investment"],ans:3},
+  {q:"Which of the following is NOT a category or element of the balance sheet?",opts:["Expense","Liabilities","Assets","Account payable"],ans:0},
+  {q:"The account used to record the transfers of assets from a business to its owner is:",opts:["A revenue account","The owner's withdrawals account","The owner's capital account","An expense account"],ans:1},
+  {q:"Reflects assumption that the business will continue operating instead of being closed or sold. It is about:",opts:["Going-Concern Assumption","Business Entity Assumption","Time Period Assumption","Revenue Recognition Principle"],ans:0},
+  {q:"A company must record its expenses incurred to generate the revenue reported at the same period. It is about:",opts:["Going-Concern Assumption","Business Entity Assumption","Time Period Assumption","Matching Principle"],ans:3},
+  {q:"Which is the assumption stating that a business is accounted for separately from other business entities, including its owner?",opts:["Going-Concern Assumption","Business Entity Assumption","Time Period Assumption","Matching Principle"],ans:1},
+  {q:"Which are expected to be sold, collected or used within one year or the company's operating cycle?",opts:["Non-Current assets","Non-Current liabilities","Current liabilities","Current assets"],ans:3},
+  {q:"Which of the following statements is true about assets?",opts:["They are economic resources owned or controlled by the business","They are expected to provide future benefits to the business","They appear on the balance sheet","All of these"],ans:3},
+  {q:"Net Income:",opts:["Decreases equity","Represents the amount of assets owners put into a business","Equals assets minus liabilities","Is the excess of revenues over expenses"],ans:3},
+  {q:"Decreases in equity that represent costs of assets or services used to earn revenues are called:",opts:["Liabilities","Equity","Withdrawals","Expenses"],ans:3},
+  {q:"Accounting is an information and measurement system that:",opts:["Identifies business activities","Records business activities","Communicates business activities","All of these"],ans:3},
+  {q:"Which of the following accounting principles would require that all goods and services purchased should be recorded at cost?",opts:["Going-concern principle","Continuing-concern principle","Cost principle","Business entity principle"],ans:2},
+  {q:"External users of accounting information include:",opts:["Shareholders","Customers","Creditors","All of these"],ans:3},
+  {q:"The description of the relation between a company's assets, liabilities, and equity expressed as Assets = Liabilities + Equity is known as the:",opts:["Income statement equation","Accounting equation","Business equation","Net income"],ans:1},
+  {q:"Another name for equity is:",opts:["Net income","Expenses","Net asset","Revenue"],ans:2},
+  {q:"On June 30, the assets and liabilities of Phoenix Phildell are: Cash $20,500; Accounts Receivable $7,250; Supplies $650; Equipment $12,000; Accounts Payable $9,300. What is the amount of owner's equity?",opts:["$8,300","$13,050","$20,500","$31,100"],ans:3},
+  {q:"Accounts receivable refers to:",opts:["A promise from customer for service or product the company provided on credit","A prepayment of future expense","A prepayment of customer for service to be provided in future","Money which is owed to a provider by the company"],ans:0},
+  {q:"Money which a company owes to vendors for products and services purchased on credit is:",opts:["Prepayment","Account receivable","Asset","Account payable"],ans:3},
+  {q:"If the liabilities of a company increased $74,000 during a period and equity in the company decreased $19,000 during the same period, what was the effect on the assets?",opts:["Assets would have increased $55,000","Assets would have decreased $55,000","Assets would have increased $19,000","Assets would have decreased $19,000"],ans:0},
+  {q:"Creditors' claims on the assets of a company are called:",opts:["Net losses","Expenses","Revenues","Liabilities"],ans:3},
+  {q:"Distributions by a business to its owners are called:",opts:["Withdrawals","Expenses","Assets","Retained earnings"],ans:0},
+  {q:"How would the accounting equation of Boston Company be affected by the billing of a client for $10,000 of consulting work completed?",opts:["+$10,000 accounts receivable, -$10,000 accounts payable","+$10,000 accounts receivable, +$10,000 accounts payable","+$10,000 accounts receivable, +$10,000 cash","+$10,000 accounts receivable, +$10,000 revenue"],ans:3},
+  {q:"Viscount Company collected $42,000 cash on its accounts receivable. The effects of this transaction as reflected in the accounting equation are:",opts:["Total assets decrease and equity increases","Both total assets and total liabilities decrease","Total assets, total liabilities, and equity are unchanged","Both total assets and equity are unchanged and liabilities increase"],ans:2},
+  {q:"The financial statement that reports whether the business earned a profit and lists the types and amounts of revenues and expenses is called:",opts:["A Balance sheet","A Statement of owner's equity","A Statement of cash flows","An Income statement"],ans:3},
+  {q:"A balance sheet lists:",opts:["The types and amounts of the revenues and expenses of a business","Only the information about what happened to equity during a time period","The types and amounts of assets, liabilities, and equity of a business as of a specific date","The inflows and outflows of cash during the period"],ans:2},
+  {q:"A condition in which a company's expenses exceed its revenues is called:",opts:["A loss","A gain","A profit","A net income"],ans:0},
+  {q:"Which is true about accounts receivable?",opts:["Money which is owed to a company by a customer for products and services provided on credit","Money which is owed to a company by a customer for products and services provided","Money which is borrowed by a company for products and services bought on credit","Money which is borrowed by a company for products and services bought"],ans:0},
+  {q:"Which statement is true about prepaid expense?",opts:["Prepaid expense is considered an asset on the balance sheet","Prepaid expense is considered a liability on the balance sheet","Prepaid expense is considered an expense on the income statement","Prepaid expense is considered a loss on the income statement"],ans:0},
+  {q:"Which statement is true about unearned revenue?",opts:["Unearned revenue is considered an asset on the balance sheet","Unearned revenue is considered a liability on the balance sheet","Unearned revenue is considered an expense on the income statement","Unearned revenue is considered a loss on the income statement"],ans:1},
+  {q:"The assets of a company total $700,000; the liabilities, $200,000. What are the claims of the owners?",opts:["$900,000","$700,000","$500,000","$200,000"],ans:2},
+  {q:"An account used to record the owner's investments in the business is called a(n):",opts:["Withdrawals account","Contributed Capital account","Revenue account","Expense account"],ans:1},
+  {q:"A company's balance sheet shows: cash $22,000, accounts receivable $16,000, office equipment $50,000, and accounts payable $17,000. What is the amount of owner's equity?",opts:["$17,000","$29,000","$71,000","$88,000"],ans:2},
+  {q:"Gross increases in equity from a company's earnings activities are:",opts:["Assets","Revenues","Liabilities","Owner's Equity"],ans:1},
+  {q:"How many accounts does every business transaction affect at least?",opts:["1","2","3","4"],ans:1},
+  {q:"The accounting assumption that requires every business to be accounted for separately from other business entities, including its owner(s) is known as the:",opts:["Objectivity principle","Business entity assumption","Going-concern assumption","Revenue recognition principle"],ans:1},
+  {q:"The rule that requires financial statements to reflect the assumption that the business will continue operating instead of being closed or sold is the:",opts:["Going-concern principle","Business entity principle","Objectivity principle","Cost Principle"],ans:0},
+  {q:"Prepaid expenses are:",opts:["Payments made for products and services that do not ever expire","Classified as liabilities on the balance sheet","Decreases in equity","Assets that represent prepayments of future expenses"],ans:3},
+  {q:"External users of accounting information EXCLUDE:",opts:["Shareholders","Manager","Creditors","Government regulators"],ans:1},
+  {q:"The rule that financial statements will be prepared with the assumption that the business will continue operating instead of being closed or sold, is the:",opts:["On-Going-concern principle","Accrual basic principle","Matching principle","Cost Principle"],ans:0},
+  {q:"The accounting principle that requires expense incurred to generate revenue to be recorded at the same period with that revenue is:",opts:["Matching principle","Cost principle","On-Going-concern principle","Accrual principle"],ans:0},
+  {q:"Which transaction represented an expense during August?",opts:["Purchased office supplies for $3,000 cash","Paid $3,300 in settlement of a loan obtained three months earlier","Paid $500 to a garage mechanic for automobile repair work performed in June","Rented a space for office on account. The rental amount will be paid in the next 2 months."],ans:3},
+  {q:"Which is true about Expenses:",opts:["The same as net income","The excess of expenses over assets","Resources owned or controlled by a company","The costs of assets or services used to generate revenue"],ans:3},
+  {q:"Which is true about Revenues:",opts:["The same as net income","The excess of expenses over assets","Resources owned or controlled by a company","Company's earning activities that contribute to increase owner's equity"],ans:3},
+  {q:"Which type of information would be of most interest to creditors?",opts:["Dividend declared","Ability of the company to pay debts","Last year's profit","Current share price"],ans:1},
+  {q:"What accounting principle requires credit sales revenue to be included in the income statement?",opts:["Cash basis","Accrual basis","Accounting period assumption","Monetary unit assumption"],ans:1},
+  {q:"Repayment of the loan for the bank $2,000 cash will be recorded in general journal as:",opts:["Debit cash, credit Expense","Credit cash, debit expense","Debit cash, credit loan","Credit cash, debit loan"],ans:3},
+  {q:"The right side of a T-account is a(n):",opts:["Debit","Increase","Credit","Decrease"],ans:2},
+  {q:"A liability account that reports amounts received in advance of providing goods or services is about:",opts:["Prepaid expense","Liability","Revenue","Unearned revenue"],ans:3},
+  {q:"Which statement is true about Mary's capital?",opts:["The owner's equity account that contains the amount invested plus net income since the company began minus the draws made","The owner's equity account that contains the amount invested minus the net income since the company began minus the draws","The owner's equity account that contains the amount invested plus the net income since the company began plus the draws","The owner's equity account that contains the amount invested plus the net income since the company began"],ans:0},
+  {q:"Which is true about An account balance:",opts:["Always a debit","Is the difference between the total debits and total credits for an account","Is the difference between the total debits and total credits for an account including the beginning balance","Always a credit"],ans:2},
+  {q:"If Tim Jones, the owner of Jones Hardware proprietorship, uses cash of the business to purchase a family automobile, the business should record this use of cash with an entry to:",opts:["Debit Salary Expense and credit Cash","Debit Tim Jones, Salary and credit Cash","Debit Cash and credit Tim Jones, Withdrawals","Debit Tim Jones, Withdrawals and credit Cash"],ans:3},
+  {q:"Which of the following accounts is NOT increased by a debit?",opts:["Revenue","Expense","Asset","Withdrawal"],ans:0},
+  {q:"Which of the following statements is true?",opts:["A debit increases an asset while a credit decreases an asset","A debit decreases an asset while a credit decreases an asset","A debit increases a liability and a credit decreases a liability","A debit increases revenues and a credit decreases revenues"],ans:0},
+  {q:"Which of the following statements is correct?",opts:["The left side of a T-account is the credit side","Debits decrease asset and expense accounts, and increase liability, equity, and revenue accounts","The left side of a T-account is the debit side","Credits increase asset and expense accounts, and decrease liability, equity, and revenue accounts"],ans:2},
+  {q:"On September 30, the Cash account of Value Company had a normal balance of $5,000. During September, the account was debited for a total of $12,200 and credited for a total of $11,500. What was the balance in the Cash account at the beginning of September?",opts:["A $0 balance","A $4,300 debit balance","A $4,300 credit balance","A $5,700 debit balance"],ans:1},
+  {q:"An asset created by prepayment of an expense is:",opts:["Recorded as a debit to an unearned revenue account","Recorded as a debit to a prepaid expense account","Recorded as a credit to an unearned revenue account","Recorded as a credit to a prepaid expense account"],ans:1},
+  {q:"Which statement is true: Generally when an expense or withdrawal is involved in a transaction...",opts:["It will be debit","It will be credit","When making a loan, it will be debit","When making a loan, it will be credit"],ans:0},
+  {q:"A debit is used to record:",opts:["A decrease in an asset account","A decrease in an expense account","An increase in a revenue account","An increase in the balance of the owner's withdrawals account"],ans:3},
+  {q:"Of the following accounts, the one that normally has a credit balance is:",opts:["Cash","Office Equipment","Sales Salaries Payable","Owner, Withdrawals"],ans:2},
+  {q:"Under the accrual basis of accounting, expenses are reported in the accounting period when the:",opts:["Cash is paid for purchasing","Expense is incurred","Contracts have been signed","Trading negotiation has been done"],ans:1},
+  {q:"A credit is used to record:",opts:["A decrease in an expense account","A decrease in an asset account","An increase in an unearned revenue account","All of these"],ans:3},
+  {q:"Unearned revenues are:",opts:["Revenues that have been earned and received in cash","Revenues that have been earned but not yet collected in cash","Liabilities created when a customer pays in advance for products or services before the revenue is earned","Recorded as an asset in the accounting records"],ans:2},
+  {q:"Which of the following statements is INCORRECT?",opts:["The normal balance of accounts receivable is a debit","The normal balance of owner's withdrawals is a debit","The normal balance of unearned revenues is a credit","The normal balance of an expense account is a credit"],ans:3},
+  {q:"A debit is:",opts:["An increase in an account","The right-hand side of a T-account","A decrease in an account","The left-hand side of a T-account"],ans:3},
+  {q:"A simple account form widely used in accounting as a tool to understand how debits and credits affect an account balance is called a:",opts:["Withdrawals account","Capital account","Drawing account","T-account"],ans:3},
+  {q:"Provide descriptions: Debit supplies $1,000 and Credit Account Payable $1,000",opts:["Used supplies","Purchased supplies","Purchased supplies on credit","Counted supplies"],ans:2},
+  {q:"Provide descriptions: Credit cash $2,000 and Debit Account Payable $2,000",opts:["Buying for cash","Selling for cash","Selling on credit","Paid accounts payable"],ans:3},
+  {q:"Provide descriptions: Debit cash $5,000 and Credit Account Receivable $5,000",opts:["Buying on credit","Received cash for an account receivable","Buying for cash","Selling for cash"],ans:1},
+  {q:"Provide descriptions: Credit supplies $2,000 and Debit expense $2,000",opts:["None of these","Selling supplies on credit worth $2,000","Buying supplies for cash worth $2,000","Used supplies in business worth $2,000"],ans:3},
+  {q:"Provide descriptions: Credit cash and debit owner equity",opts:["Investing by owner in cash","Paid expense of business","Withdrawal of cash from business by owner for personal use","Withdrawal of cash from business by owner for personal use or paid expense of business"],ans:3},
+  {q:"Which account is a noncurrent or long-term asset?",opts:["Equipment, supplies, vehicle","Equipment, building, vehicle","Equipment, prepaid expense, vehicle","Equipment, account receivable, vehicle"],ans:1},
+  {q:"Wisconsin Rentals purchased office supplies on credit. The general journal entry made by Wisconsin Rentals will include a:",opts:["Debit to Accounts Payable","Debit to Accounts Receivable","Credit to Cash","Credit to Accounts Payable"],ans:3},
+  {q:"A record of financial transactions in order by date, often defined as the book of original entry. This statement is about:",opts:["None of these","A Ledger","A Source document","A General journal"],ans:3},
+  {q:"Under the accrual basis of accounting, revenues are reported in the accounting period when the:",opts:["Cash is received","Service or goods have been delivered","Contracts have been signed","Trading negotiation has been done"],ans:1},
+  {q:"Provide descriptions: Debit inventory $8,000 and Credit Account payable $8,000",opts:["Buying inventory by cash $8,000","Buying inventory on credit $8,000","Arrange inventory contract on credit $8,000","Arrange inventory contract by cash $8,000"],ans:1},
+  {q:"Provide descriptions: Debit inventory $8,000 and Credit cash $8,000",opts:["Buying inventory by cash $8,000","Buying inventory on credit $8,000","Arrange inventory contract on credit $8,000","Arrange inventory contract by cash $8,000"],ans:0},
+  {q:"Provide descriptions: Debit insurance expense $8,000 and Credit Insurance - prepaid expense $8,000",opts:["Paid insurance fee by cash $8,000","Adjusting prepaid expense at the end of period $8,000","Arrange insurance contract on credit $8,000","Arrange inventory contract by cash $8,000"],ans:1},
+  {q:"Provide descriptions: Debit Cash $8,000 and Credit Unearned revenue $8,000",opts:["Received payment in advance from customers by cash $8,000","Paid in advance for supplies by cash $8,000","Adjusting expense at the end of period $8,000","Adjusting unearned revenue at the end of period $8,000"],ans:0},
+  {q:"The company buys a new car for personal use of the owner is recorded with which entry?",opts:["Debit cash and credit withdrawal","Credit cash and debit withdrawal","Credit account payable and debit withdrawal","Credit cash and debit expense"],ans:1},
+  {q:"Borrow $1,000 loan to pay for new equipment of the company is recorded with:",opts:["Debit equipment and credit loan","Credit equipment and debit loan","Debit cash and credit loan","Credit cash and debit loan"],ans:0},
+  {q:"The company buys a new building for operation is recorded with below entry:",opts:["Debit cash and credit withdrawal","Credit cash and debit equipment","Credit account payable and debit withdrawal","Credit cash and debit expense"],ans:1},
+  {q:"On June 1, 2010, The company paid $1,000 cash for the loan owing the bank before. Recording this transaction.",opts:["Debit cash and credit loan","Credit cash and debit loan","Debit account payable and credit loan","Credit account payable and debit loan"],ans:1},
+  {q:"If Smith, the owner of a restaurant, uses cash of the business to pay for renting his house, the business should record this use of cash with an entry to:",opts:["Debit Expense and credit Cash","Credit Expense and Debit Cash","Debit Cash and credit Withdrawals","Debit Withdrawals and credit Cash"],ans:3},
+  {q:"If Hussan, the owner of Hardware company, uses cash of the business to purchase a motorcycle for his travelling, the business should record this use of cash with an entry to:",opts:["Debit Expense and credit Cash","Credit Expense and Debit Cash","Debit Cash and credit Withdrawals","Debit Withdrawals and credit Cash"],ans:3},
+  {q:"Of the following account types, which would be increased by a debit?",opts:["Liabilities and expenses","Assets and equity","Assets and expenses","Equity and revenues"],ans:2},
+  {q:"The proper journal entry to record Ransom Company's billing of clients for $500 of services rendered is:",opts:["Dr. Cash 500; Cr. Accounts Receivable 500","Dr. Accounts Receivable 500; Cr. Capital Stock 500","Dr. Accounts Receivable 500; Cr. Service Revenue 500","Dr. Cash 500; Cr. Service Revenue 500"],ans:2},
+  {q:"The trial balance:",opts:["Is a formal financial statement","Is used to prove that there are no errors in the journal or ledger","Provides a listing of every account in the chart of accounts","Provides a listing of the balance of each ledger account"],ans:3},
+  {q:"Invested $10,000 cash, and $15,000 of computer equipment. Prepare journal entries to record the above transactions.",opts:["Debit Cash $25,000; Credit Capital $25,000","Debit Cash $10,000; Debit Equipment $15,000; Credit Capital $25,000","Credit Cash $10,000; Credit Equipment $15,000; Debit Capital $25,000","Credit Cash $25,000; Debit Capital $25,000"],ans:1},
+  {q:"Provide descriptions: Debit unearned revenue $8,000 and Credit revenue $8,000",opts:["Received payment in advance from customers $8,000","Paid in advance for supplies by cash $8,000","Adjusting expense at the end of period $8,000","Adjusting unearned revenue at the end of period $8,000"],ans:3},
+  {q:"On June 1, paid $200 cash for office supplies. Prepare journal entries to record this transaction.",opts:["Debit Cash $200; Credit Office Supplies $200","Debit Office Supplies Expense $200; Credit Cash $200","Debit Cash $200; Credit Office Supplies Expense $200","Debit Office Supplies $200; Credit Cash $200"],ans:3},
+  {q:"Textron Stores purchased a van that cost $35,000. The firm made a payment of $5,000 cash and the balance on credit. Show the general journal entry to record this transaction.",opts:["Debit Cash $5,000; Debit Account Payable $30,000; Credit Van $35,000","Debit Cash $5,000; Credit Account Payable $30,000; Credit Van $35,000","Debit Van $5,000; Credit Cash $5,000","Debit Van $35,000; Credit Cash $5,000; Credit Account Payable $30,000"],ans:3},
+  {q:"Selling products for cash $300 and $700 on credit. Show the general journal entry to record sale revenue.",opts:["Debit Cash $300; Debit Account Receivable $700; Credit Revenue $1,000","Debit Cash $300; Debit Account Payable $700; Credit Revenue $1,000","Debit Account Receivable $700; Credit Unearned Revenue $700","Debit Cash $700; Credit Revenue $700"],ans:0},
+  {q:"A company had no office supplies at the beginning of the year. During the year, the company purchased $250 of office supplies. On December 31, $75 of office supplies remained. How much should the company report as office supplies expense for the year?",opts:["$75","$125","$175","$250"],ans:2},
+  {q:"The account used to record the investment of owner into the business is:",opts:["A revenue account","The owner's withdrawals account","The owner's contributed capital account","An expense account"],ans:2},
+  {q:"If Jones, the owner of Hardware company, uses cash of the business to purchase a family car, the business should record this use of cash with an entry to:",opts:["Debit Expense and credit Cash","Credit Expense and Debit Cash","Debit Cash and credit Withdrawals","Debit Withdrawals and credit Cash"],ans:3},
+  {q:"On June 30, 2009, Apricot Co. paid $7,500 cash for a service that will be performed during a two-year period. On June 30, 2009 Apricot should record:",opts:["A credit to an expense for $7,500 and debit cash $7,500","A debit to a prepaid expense for $7,500 and credit cash $7,500","A debit to a prepaid expense for $7,500 and credit account payable $7,500","A credit to a prepaid expense for $7,500 and debit cash $7,500"],ans:1},
+  {q:"Which of the following errors would result in the trial balance still balancing?",opts:["The journal entry was posted by debiting salaries expense and debiting cash","Posted $500 to each account instead of $5,000","The salaries expense was posted as $500, but the cash was posted as $5,000","All of these errors can result in the balance of the trial balance"],ans:1},
+  {q:"On January 1 a company purchased a five-year insurance policy for $1,800 with coverage starting immediately. The adjusting entry at the end of the first year is:",opts:["Debit Prepaid Insurance $1,800; Credit Cash $1,800","Debit Prepaid Insurance $1,440; Credit Insurance Expense $1,440","Debit Prepaid Insurance $360; Credit Insurance Expense $360","Debit Insurance Expense $360; Credit Prepaid Insurance $360"],ans:3},
+  {q:"Unearned revenue is reported in the financial statements as:",opts:["Revenue on the balance sheet","A liability on the balance sheet","Unearned revenue on the income statement","An asset on the balance sheet"],ans:1},
+  {q:"On April 30, 2009, a three-year insurance policy was purchased for $18,000 with coverage to begin immediately. What is the amount of insurance expense for the year ended December 31, 2009?",opts:["$500","$4,000","$6,000","$14,000"],ans:1},
+  {q:"PPW Co. leased a portion of its store for eight months beginning October 1, 2009, at a monthly rate of $800. The other company paid $6,400 cash on October 1, which PPW recorded as unearned revenue. The journal entry on December 31, 2009 would include:",opts:["A debit to Rent Earned for $2,400","A credit to Unearned Rent for $2,400","A debit to Cash for $6,400","A credit to Rent Earned for $2,400"],ans:3},
+  {q:"Which accounts are used to record amounts owed to suppliers for products or services purchased on credit?",opts:["Unearned revenue","Trade account receivable","Trade accounts payable","Revenue"],ans:2},
+  {q:"On May 1, 2009, Giltus Advertising Company received $1,500 from Julie Bee for advertising services to be completed April 30, 2010. At December 31, 2009, $1,000 of the fees had been earned. The adjusting entry on December 31 should include:",opts:["A debit to Unearned Fees for $500","A credit to Unearned Fees for $500","A credit to Earned Fees for $1,000","A debit to Earned Fees for $1,000"],ans:2},
+  {q:"The difference between the cost of an asset and the accumulated depreciation for that asset is called:",opts:["Depreciation Expense","Unearned Depreciation","Prepaid Depreciation","Book Value"],ans:3},
+  {q:"Failure to make adjusting entries for prepaid expense will result in:",opts:["Overstatement of expenses","Understatement of expenses","Understatement of assets","Overstatement of Liabilities"],ans:1},
+  {q:"If accrued salaries were recorded on December 31 with a credit to Salaries Payable, the entry to record payment of these wages on January 5 would include:",opts:["A debit to Cash and a credit to Salaries Payable","A debit to Cash and a credit to Prepaid Salaries","A debit to Salaries Payable and a credit to Cash","A debit to Salaries Payable and a credit to Salaries Expense"],ans:2},
+  {q:"Which statement is true about account payable?",opts:["Account payable is considered a liability on the balance sheet","Account payable is considered a liability on the statement of owner equity","Account payable is considered a liability on the income statement","Account payable is considered a liability on the cash flow statement"],ans:0},
+  {q:"The adjusting entry to record the earned but unpaid salaries of employees at the end of an accounting period is:",opts:["Debit Unpaid Salaries and credit Salaries Payable","Debit Salaries Payable and credit Salaries Expense","Debit Salaries Expense and credit Cash","Debit Salaries Expense and credit Salaries Payable"],ans:3},
+  {q:"What is the proper adjusting entry at December 31, if the balance in prepaid insurance is $7,750 before adjustment, and the unexpired amount per analysis of policies is $3,250?",opts:["Debit Insurance Expense $3,250; Credit Prepaid Insurance $3,250","Debit Insurance Expense $4,500; Credit Prepaid Insurance $4,500","Debit Prepaid Insurance $4,500; Credit Insurance Expense $4,500","Debit Insurance Expense $7,750; Credit Prepaid Insurance $7,750"],ans:1},
+  {q:"Identify the consequences of not making adjustment for accrued expense:",opts:["Overstatement of liabilities","Understatement of liabilities","Overstatement of expenses","Understatement of capital"],ans:1},
+  {q:"On January 1, Southwest College received $1,200,000 in Unearned Tuition Revenue from its students for the spring semester spanning four months beginning on January 2. What amount of tuition revenue should the college recognize on January 31?",opts:["$300,000","$600,000","$800,000","$900,000"],ans:0},
+  {q:"Which statement is true about Accumulated Depreciation?",opts:["A contra-asset account such as Accumulated Depreciation will likely have debit balance","A contra-asset account such as Accumulated Depreciation will likely have credit balance","A contra-asset account such as Depreciation will likely have credit balance","A contra-asset account such as Depreciation will likely have debit balance"],ans:1},
+  {q:"The useful life of a fixed asset is:",opts:["The length of time it is productively used in a company's operations","Never related to its physical life","Its productive life, but not to exceed one year","Don't need to be determined"],ans:0},
+  {q:"An adjusting entry for unearned revenue affects:",opts:["Assets and expenses","Assets and revenues","Revenue and Liabilities","Expenses and Liabilities"],ans:2},
+  {q:"The company has no office supplies at the beginning of the year. During the year, the company purchased $500 of office supplies on credit. On December 31, there is $100 of office supplies remaining. How much should the company report for the year as office supplies expense?",opts:["$600","$400","$100","$300"],ans:1},
+  {q:"Which statement is true about revenue in financial statements?",opts:["Revenue is reported as a liability on the balance sheet","Revenue is reported as an asset on the balance sheet","Revenue is reported as an owner's equity on the balance sheet","Revenue is reported on the income statement"],ans:3},
+  {q:"Adjusting entries:",opts:["Affect only income statement accounts","Affect only balance sheet accounts","Affect both income statement and balance sheet accounts","Affect only cash flow statement accounts"],ans:2},
+  {q:"The system of preparing financial statements based on recognizing revenues when the cash is received and reporting expenses when the cash is paid is called:",opts:["Accrual basis accounting","Operating cycle accounting","Cash basis accounting","Revenue recognition accounting"],ans:2},
+  {q:"Adjusting entries are journal entries made at the end of an accounting period for the purpose of:",opts:["Updating liability and asset accounts to their proper balances","Assigning revenues to the periods in which they are earned","Assigning expenses to the periods in which they are incurred","All of these"],ans:3},
+  {q:"The approach to preparing financial statements based on recognizing revenues when they are earned and matching expenses to those revenues is:",opts:["Cash basis accounting","The matching principle","The time period principle","Accrual basis accounting"],ans:3},
+  {q:"Prepaid expenses, depreciation, accrued expenses, unearned revenues, and accrued revenues are all examples of:",opts:["Items that require contra accounts","Items that require adjusting entries","Asset and equity","Asset accounts"],ans:1},
+  {q:"Which of the following statements is INCORRECT about adjusting entries?",opts:["Adjustments to prepaid expenses, depreciation, and unearned revenues involve previously recorded assets and liabilities","Accrued expenses and accrued revenues involve assets and liabilities that had not previously been recorded","Adjusting entries can be used to record both accrued expenses and accrued revenues","Adjusting entries affect the cash account"],ans:3},
+  {q:"An adjusting entry could be made for each of the following EXCEPT:",opts:["Prepaid expenses","Depreciation","Owner withdrawals","Unearned revenues"],ans:2},
+  {q:"An adjusting entry could be made for each of the following EXCEPT:",opts:["Prepaid expenses","Depreciation","Supplies","Owner capital"],ans:3},
+  {q:"An adjusting entry could be made for each of the following EXCEPT:",opts:["Prepaid expenses","Depreciation","Cash","Accrued expenses"],ans:2},
+  {q:"Provide descriptions: Debit expense $2,000 and Credit supplies $2,000",opts:["Purchased supplies by cash","Used supplies","Counted supplies","Purchased supplies on credit"],ans:1},
+  {q:"An adjusting entry could be made for each of the following EXCEPT:",opts:["Prepaid expenses","Supplies","Unearned revenues","Account payable"],ans:3},
+  {q:"An adjusting entry could be made for each of the following EXCEPT:",opts:["Accrued expenses","Depreciation","Unearned revenues","Revenue"],ans:3},
+  {q:"An adjusting entry could be made for each of the following EXCEPT:",opts:["Prepaid expenses","Supplies","Unearned revenues","Cost of goods sold"],ans:3},
+  {q:"The expense created by allocating the cost of fixed assets to the periods in which they are used is called:",opts:["Accumulated depreciation","A contra account","The matching principle","Depreciation expense"],ans:3},
+  {q:"Which statement is correct about accumulated depreciation?",opts:["Accumulated Depreciation is a contra asset account","Depreciation expense is a contra asset account","Account payable is a contra asset account","Account receivable is a contra asset account"],ans:0},
+  {q:"Prior to recording adjusting entries, the Office Supplies account had a $359 debit balance. A physical count showed $105 of unused supplies available. The required adjusting entry is:",opts:["Debit Office Supplies $105; Credit Office Supplies Expense $105","Debit Office Supplies Expense $105; Credit Office Supplies $105","Debit Office Supplies Expense $254; Credit Office Supplies $254","Debit Office Supplies $254; Credit Office Supplies Expense $254"],ans:2},
+  {q:"If throughout an accounting period the fees for legal services paid in advance by clients are recorded in Unearned Legal Fees, the end-of-period adjusting entry to record the portion earned is:",opts:["Debit Cash and credit Legal Fees Earned","Debit Cash and credit Unearned Legal Fees","Debit Unearned Legal Fees and credit Legal Fees Earned","Debit Legal Fees Earned and credit Unearned Legal Fees"],ans:2},
+  {q:"On April 1, 2009, a company paid the $1,350 premium on a three-year insurance policy with benefits beginning on that date. What will be the insurance expense on the annual income statement for the year ended December 31, 2009?",opts:["$1,350","$450","$1,012.50","$337.50"],ans:3},
+  {q:"Where is Accumulated depreciation reported?",opts:["Balance sheet","Income Statement","Statement of cash flows","Statement of changes in Equity"],ans:0},
+  {q:"Adjusting depreciation expense of fixed asset at $8,000. Recording this transaction:",opts:["Debit depreciation $8,000 and credit accumulated depreciation expense $8,000","Debit depreciation expense $8,000 and credit accumulated depreciation expense $8,000","Debit depreciation expense $8,000 and credit fixed asset $8,000","Debit depreciation expense $8,000 and credit accumulated asset $8,000"],ans:1},
+  {q:"Which kind of account is accumulated depreciation?",opts:["Asset account","Liability account","Equity account","Contra-asset account"],ans:3},
+  {q:"Adjusting entries at the end of an accounting period would NOT be required for which of the following?",opts:["Multi-period costs that must be split among 2 or more accounting periods","Multi-period revenues that must be split among 2 or more accounting periods","Expenses that have been incurred in a given period but not as yet recorded","Revenue that has been earned and recorded in the accounting records"],ans:3},
+  {q:"At the end of the current accounting period, Johnson Company failed to record utilities consumed during the period. Johnson will be billed for the utilities during the next accounting period. As a result, current period liabilities and income, respectively, are:",opts:["Correct, correct","Overstate, overstate","Understate, overstate","Overstate, understate"],ans:2},
+  {q:"How will the Financial Statements be affected if Accountant forgot to adjust a prepaid expense account at the end of the period?",opts:["Assets in the Balance sheet will be overstated","Liabilities in the Balance sheet will be overstated","Assets will be understated and Revenues will be overstated","Assets in the Balance sheet will be overstated and Expenses in the Income Statement will be understated"],ans:3},
+  {q:"How will it affect Income Statement if an accrued expense of $450 is forgotten to record at the end of the period?",opts:["Net Income in the Income Statement will be overstated for $450","Net Income in the Income Statement will not be affected","Income Statement will not be affected but Balance sheet will be understated","Net income in the Income Statement will be understated for $450"],ans:0},
+  {q:"How will it affect total Assets in the balance sheet if tangible fixed assets are not depreciated at the end of the period?",opts:["Total Assets are overstated","Total Assets will not be affected","Total Assets will not be affected but Liabilities will be overstated","Total Assets will be understated"],ans:0},
+  {q:"The summary amounts on December 31 work sheet: Asset $15,000; Liability $14,000; Withdrawal $1,000. Prepare the necessary closing entries into OWNER CAPITAL for withdrawals:",opts:["Debit Withdrawal $1,000; Credit Owner Capital $1,000","Debit Expense $1,000; Credit Owner Capital $1,000","Debit Owner Capital $1,000; Credit Expense $1,000","Debit Owner Capital $1,000; Credit Withdrawal $1,000"],ans:3},
+  {q:"Revenues, expenses, and withdrawals accounts, which are closed at the end of each accounting period are:",opts:["Real accounts","Temporary accounts","Closing accounts","Permanent accounts"],ans:1},
+  {q:"Assets, liabilities, and equity accounts are not closed; these accounts are called:",opts:["Nominal accounts","Temporary accounts","Permanent accounts","Contra accounts"],ans:2},
+  {q:"Journal entries recorded at the end of each accounting period to prepare the revenue, expense, and withdrawals accounts for the upcoming period and to update the owner's capital account are referred to as:",opts:["Adjusting entries","Closing entries","Final entries","Work sheet entries"],ans:1},
+  {q:"The J. Godfrey, Capital account has a credit balance of $17,000 before closing entries. Total revenues = $55,200, total expenses = $39,800, and withdrawals = $9,000. What is the ending balance in the J. Godfrey, Capital account after all closing entries?",opts:["$8,000","$15,400","$23,400","$17,000"],ans:2},
+  {q:"The summary amounts on December 31: Asset $10,000; Revenue $15,000; Unearned revenue $1,000. Prepare the necessary closing entries into INCOME SUMMARY for revenue:",opts:["Debit Unearned Revenue $1,000; Credit Income summary $1,000","Credit Unearned Revenue $1,000; Debit Income summary $1,000","Credit Revenue $15,000; Debit Income summary $15,000","Debit Revenue $15,000; Credit Income summary $15,000"],ans:3},
+  {q:"The Income Summary account is used:",opts:["To adjust and update asset and liability accounts","To close the revenue and expense accounts","To determine the appropriate withdrawal amount","To replace the income statement under certain circumstances"],ans:1},
+  {q:"Which accounts DON'T need to do closing entries?",opts:["Revenue","Expense","Income Summary","Current asset"],ans:3},
+  {q:"Dina Kader withdrew a total of $35,000 from her business during the current year. The entry needed to close the withdrawals account is:",opts:["Debit Income Summary and credit Cash for $35,000","Debit Dina Kader, Withdrawals and credit Cash for $35,000","Debit Income Summary and credit Dina Kader, Withdrawals for $35,000","Debit Dina Kader, Capital and credit Dina Kader, Withdrawals for $35,000"],ans:3},
+  {q:"Which statement is true about temporary vs permanent accounts?",opts:["Revenue and expense accounts are permanent accounts and should be closed at the end of the accounting period","Revenue and withdrawal accounts are permanent accounts and should be closed at end of accounting period","Revenue and expense accounts are temporary accounts and should be closed at the end of the accounting period","Revenue and asset accounts are temporary accounts and should be closed at the end of the accounting period"],ans:2},
+  {q:"Which is the process that resets revenue, expense and withdrawal account balances to zero at the end of the period?",opts:["Adjusting account","Closing process","Recording transaction","Prepare trial balance"],ans:1},
+  {q:"Which accounts belong to Temporary Accounts?",opts:["Asset, liability, withdrawal, income summary","Revenue, asset, withdrawal, income summary","Revenue, expense, liability, income summary","Revenue, expense, withdrawal, income summary"],ans:3},
+  {q:"Which statement is true about Income summary and withdrawals accounts?",opts:["Income summary and withdrawals accounts are permanent accounts and should be closed at the end of the accounting period","Income summary and withdrawals accounts are temporary accounts and should be closed at the end of the accounting period","Income summary and withdrawals accounts are temporary accounts and don't need to be closed","Income summary and Liability accounts are temporary accounts and should be closed at the end of the accounting period"],ans:1},
+  {q:"Which account will be presented in Post-closing trial balance?",opts:["Salaries expense","Withdrawal","Net income","Retained Earnings"],ans:3},
+  {q:"Which accounts belong to Permanent Accounts?",opts:["Revenue, asset, liability","Revenue, expense, income summary","Asset, liability, owner capital","Revenue, expense, withdrawal"],ans:2},
+  {q:"Which accounts need to do closing entries?",opts:["Close Revenue accounts to Income Summary","Close Expense accounts to Income Summary","Close Income Summary account to Owner's Capital","All of these"],ans:3},
+  {q:"The special account used only in the closing process to temporarily hold the amounts of revenues and expenses before the net difference is added to the owner's capital account is the:",opts:["Income Summary account","Closing account","Balance column account","Profit accounts"],ans:0},
+  {q:"J. Awn, the proprietor of Awn Services, withdrew $8,700 from the business during the current year. The entry to close the withdrawals account at the end of the year is:",opts:["Debit withdrawal $8,700 and credit cash $8,700","Debit capital $8,700 and credit withdrawal $8,700","Debit capital $8,700 and credit expense $8,700","Debit expense $8,700 and credit income $8,700"],ans:1},
+  {q:"John, the owner of Matt company, withdrew $8,000 from the business during the current year. The entry to close the withdrawals account at the end of the year is:",opts:["Debit capital $8,000 and credit withdrawal $8,000","Debit capital $8,000 and credit cash $8,000","Debit capital $8,000 and credit expense $8,000","Debit expense $8,000 and credit income $8,000"],ans:0},
+  {q:"The financial statement that reports the assets, liabilities, and stockholders' (owner's) equity at a specific date is the:",opts:["Balance sheet","Income statement","Ledger","General journal"],ans:0},
+  {q:"Which statement is true about expenses and owner's equity?",opts:["Expenses increase Owner's equity","Expenses decrease Owner's equity","Expenses increase Owner's withdrawal","Expenses decrease Owner's withdrawal"],ans:1},
+  {q:"At the beginning of 2009, Beta Company reported Total Assets of $195,000 and Total Liabilities of $75,000. During 2009, revenues = $226,000, expenses = $175,000, and owner withdrawals = $48,000. The balance in the owner's capital account at the end of 2009 would be:",opts:["$174,000","$78,000","Cannot be determined","$123,000"],ans:3},
+  {q:"After closing revenues and expenses into income summary, the income summary account has a debit balance of $33,000. The entry to close the income summary account will include:",opts:["A debit of $33,000 to owner withdrawals","A credit of $33,000 to owner withdrawals","A debit of $33,000 to income summary","A debit of $33,000 to retained earnings"],ans:3},
+  {q:"The summary amounts on December 31: Asset $15,000; Liability $14,000; Expense $8,000; Withdrawal $1,000. Prepare the necessary closing entries into INCOME SUMMARY for expenses:",opts:["Debit Expense $8,000; Credit Income summary $8,000","Credit Expense $8,000; Debit Income summary $8,000","Credit withdrawal $1,000; Debit Income summary $1,000","Credit Asset $15,000; Debit Income summary $15,000"],ans:1},
+  {q:"The Income Summary account is:",opts:["Temporary account that need to be closed at the end of accounting period","Permanent account that need to be closed at the end of accounting period","Temporary account that need not to be closed at the end of accounting period","Permanent account that need not to be closed at the end of accounting period"],ans:0},
+  {q:"The summary amounts on December 31: Asset $15,000; Liability $14,000; Revenue $10,000; Withdrawal $1,000. Prepare the necessary closing entries into INCOME SUMMARY for revenue:",opts:["Debit Revenue $10,000; Credit Income summary $10,000","Debit Income summary $10,000; Credit Revenue $10,000","Debit owner capital $10,000; Credit Revenue $10,000","Debit owner capital $1,000; Credit Withdrawal $1,000"],ans:0},
+  {q:"Unearned Revenues is what type of account?",opts:["Asset","Liability","Owner equity","Net Asset"],ans:1},
+  {q:"Withdrawal account, revenues account, expenses account and income summary account are:",opts:["Permanent accounts","Temporary accounts","Equity accounts","Closing accounts"],ans:1},
+  {q:"Which statement is true about the double entry system?",opts:["The double entry system requires every transaction to be recorded in at least two places","The double entry system requires every transaction to be recorded in at least three places","The double entry system requires every transaction to be recorded in at least one place","The double entry system requires every transaction to be recorded in at least four places"],ans:0},
+  {q:"Which of the following accounts is NOT increased by a credit?",opts:["Revenue","Liability","Asset","Owner's equity"],ans:2},
+  {q:"When a sale is made with the credit terms of 2/10, net 30, the '2' refers to the:",opts:["Interest rate","Selling day","Payment Due date","Discount rate"],ans:3},
+  {q:"On June 1, $800 of goods are sold with credit terms of 1/10, n/30. How much would the seller receive if the buyer pays on June 8?",opts:["$790","$792","$240","$800"],ans:1},
+  {q:"Selling 1,000 products for a customer and collected $2,000 cash. Recording this transaction:",opts:["Debit Cash $1,000 and Credit Revenue $1,000","Credit Cash $2,000 and Debit Revenue $2,000","Debit Cash $2,000 and Unearned Revenue $2,000","Debit Cash $2,000 and credit Revenue $2,000"],ans:3},
+  {q:"Net Sales minus Cost of Goods Sold equals to:",opts:["Profit","Gross profit","Net income","Profit before tax"],ans:1},
+  {q:"Which statement is true about Merchandise available for sale?",opts:["Merchandise available for sale includes Beginning inventory and ending inventory","Merchandise available for sale includes Beginning inventory and cost of goods sold","Merchandise available for sale includes Beginning inventory and Net cost of purchases","Merchandise available for sale includes ending inventory and Net cost of purchases"],ans:2},
+  {q:"Which statement is true about Ending inventory?",opts:["Ending inventory is equal to merchandise available for sale minus beginning inventory","Ending inventory is equal to merchandise available for sale minus cost of goods sold","Ending inventory is equal to merchandise available for sale minus net cost of purchases","Beginning inventory is equal to merchandise available for sale minus cost of goods sold"],ans:1},
+  {q:"Calculated as sales minus all costs directly related to those sales. It is about:",opts:["Cost of goods sold","Expense","Revenue","Gross profit"],ans:3},
+  {q:"Which discounts are offered based on quantities purchased?",opts:["Credit discounts","Trade discounts","Purchase discounts","Payment discounts"],ans:1},
+  {q:"Which discounts are provided to customers as an incentive for them to pay early?",opts:["Credit discounts","Trade discounts","Purchase discounts","Payment discounts"],ans:3},
+  {q:"Merchandise inventory includes:",opts:["All goods owned by a company and held for sale","All goods in transit","All goods on consignment","Only damaged goods"],ans:0},
+  {q:"Costs included in the Merchandise Inventory account can include:",opts:["Invoice price minus any discount and allowance","Transportation-in","Storage","All of these"],ans:3},
+  {q:"During a period of steadily rising costs, the inventory valuation method that yields the lowest reported net income is:",opts:["Specific identification method","Average cost method","Weighted-average method","LIFO method"],ans:3},
+  {q:"The seller is responsible for the costs of shipping its goods to the buyer when the terms of the sale are FOB:",opts:["Shipping board","Shipping point","Destination point","On board"],ans:2},
+  {q:"The buyer is responsible for the costs of shipping when goods are sold with the terms FOB:",opts:["Shipping board","Shipping point","Destination","On board"],ans:1},
+  {q:"All expenditures necessary to bring an item to a salable condition and location is the definition of:",opts:["Inventory costs","Cost of goods sold","Invoice cost","Freight cost"],ans:0},
+  {q:"The inventory valuation method that results in the lowest taxable income in a period of inflation is:",opts:["LIFO method","FIFO method","Weighted-average cost method","Specific identification method"],ans:0},
+  {q:"The inventory valuation method that results in the lowest taxable income in a period of deflation is:",opts:["Net sales method","FIFO method","Weighted-average cost method","Specific identification method"],ans:1},
+  {q:"An overstatement of ending inventory will cause:",opts:["An overstatement of assets and equity on the balance sheet","An understatement of assets and equity on the balance sheet","An overstatement of assets and an understatement of equity on the balance sheet","An understatement of assets and an overstatement of equity on the balance sheet"],ans:0},
+  {q:"Acceptable inventory methods include:",opts:["LIFO method","FIFO method","Specific identification method","All of these"],ans:3},
+  {q:"A company has inventory of 10 units at $10 each on June 1. On June 3, it purchased 20 units at $12 each. 12 units are sold on June 5. Using the FIFO perpetual inventory method, what is the cost of the 12 units sold?",opts:["$120","$124","$128","$130"],ans:1},
+  {q:"A company had inventory of 10 units at $20 each on November 1. On November 2, purchased 10 units at $21 each. On November 6, purchased 15 units at $25 each. On November 8, sold 20 units. Using the LIFO perpetual inventory method, what was the cost of the 20 units sold?",opts:["$395","$480","$375","$510"],ans:1},
+  {q:"The inventory valuation method that identifies each item in ending inventory with a specific purchase and invoice is the:",opts:["Weighted average inventory method","First-in, first-out method","Last-in, first-out method","Specific identification method"],ans:3},
+  {q:"Which statement is true about the cost of an inventory item?",opts:["Its invoice cost plus any discount, and plus any added costs necessary to put it in a place and condition for sale","Its invoice cost plus any discount, and minus any added costs necessary to put it in a place and condition for sale","Its invoice cost minus any discount, and minus any added costs necessary to put it in a place and condition for sale","Its invoice cost minus any discount, and plus any added costs necessary to put it in a place and condition for sale"],ans:3},
+  {q:"Acme-Jones Company uses a weighted-average perpetual inventory system. Aug 2: 8 units at $12; Aug 18: 15 units at $14; Aug 29: 20 units sold; Aug 31: 10 units at $16. What is the per-unit value of ending inventory on August 31?",opts:["$12.00","$13.30","$15.38","$16.00"],ans:2},
+  {q:"Given the following information, determine the cost of the inventory at June 30 using the LIFO perpetual inventory method. June 1: Beginning inventory 15 units at $20; June 15: Sale of 6 units at $50; June 29: Purchased 8 units at $25. The cost of goods sold is:",opts:["$200","$220","$120","$275"],ans:2},
+  {q:"A company had inventory of 10 units at $20 each on November 1. On November 2, purchased 10 units at $22 each. On November 6, purchased 6 units at $25 each. On November 8, sold 22 units. Using the FIFO perpetual inventory method, what was the cost of the 22 units sold?",opts:["$570","$470","$670","$370"],ans:1},
+  {q:"A company has inventory of 10 units at $10 each on June 1. On June 3, purchased 20 units at $12 each. 12 units are sold on June 5. Using the FIFO periodic inventory method, what is the cost of ending inventories?",opts:["$120","$216","$128","$130"],ans:1},
+  {q:"At the end of the period, a book store has 5,000 books, of which 500 are consigned by MCQ company. During the period, the store ordered 400 books with FOB destination point terms, still in transit. Cost per unit is $20. How much are Inventories reported in the Balance sheet?",opts:["$90,000","$98,000","$89,000","$108,000"],ans:0},
+  {q:"The inventory system that continually updates accounting records for merchandising transactions is:",opts:["FIFO inventory system","LIFO inventory system","Weighted inventory system","Perpetual inventory system"],ans:3},
+  {q:"Merchandise inventories of the company include:",opts:["Goods in transit","Goods on consignments","Goods in the stores of the company","All of these"],ans:3},
+  {q:"ACB Co. agreed to purchase $150,000 inventories from XZY Co. with FOB destination terms. On December 31, ACB knew the goods had been shipped and would arrive in January. Which statement is true?",opts:["ACB should include the goods in its December 31 inventory","ACB should include the goods in its December 31 inventory, but not record the obligation to pay","ACB should not include the goods in its December 31 inventory, but should include the related payable on its balance sheet","ACB should not include the goods in its December 31 inventory, nor the related payable on its balance sheet"],ans:3},
+  {q:"A company uses a perpetual inventory system and FIFO method: Jan 1 purchased 100 units at $10; Feb 5 purchased 60 units at $12; March 16 sold 40 units for $16. Prepare journal entry for the March 16 sale.",opts:["Dr Cash 400; Cr Sale revenue 400; Dr COGS 640; Cr Inventories 640","Dr Cash 640; Cr Sale revenue 640; Dr COGS 400; Cr Inventories 400","Dr Sale revenue 640; Cr Cash 640; Dr COGS 400; Cr Inventories 400","Dr Sale revenue 640; Cr Cash 640; Dr Inventories 400; Cr COGS 400"],ans:1},
+  {q:"A company uses perpetual inventory with LIFO method: Jan 1 purchased 100 units at $10; Feb 5 purchased 60 units at $12; March 16 sold 40 units for $16. Prepare journal entry for the March 16 sale.",opts:["Dr Cash 640; Cr Sale revenue 640; Dr COGS 450; Cr Inventories 450","Dr Cash 640; Cr Sale revenue 640; Dr COGS 840; Cr Inventories 840","Dr Cash 640; Cr Sale revenue 640; Dr COGS 480; Cr Inventories 480","Dr Sale revenue 640; Cr Cash 640; Dr COGS 480; Cr Inventories 480"],ans:2},
+  {q:"Inventory accounts should be classified in which section of a balance sheet?",opts:["Current assets","Investments","Intangible assets","Non-current assets"],ans:0},
+  {q:"Hefty Company: Beginning inventory Jan 2: 500 units at $3.00; April 7: 1,100 units at $3.20; June 30: 400 units at $4.00; Dec 7: 1,600 units at $4.40. Sales = 2,700 units. Using periodic LIFO method, cost of goods sold would be:",opts:["$2,780","$3,960","$9,700","$10,880"],ans:3},
+  {q:"A company uses perpetual inventory with weighted average method: Jan 1 purchased 100 units at $10; Feb 5 purchased 60 units at $12; March 16 sold 40 units for $16. Prepare journal entry for March 16 sale.",opts:["Dr Cash 640; Cr Sale revenue 640; Dr COGS 450; Cr Inventories 450","Dr Cash 640; Cr Sale revenue 640; Dr COGS 340; Cr Inventories 340","Dr Cash 640; Cr Sale revenue 640; Dr COGS 430; Cr Inventories 430","None of these"],ans:2},
+  {q:"A method of calculating the COGS that uses the cost of the newest items in inventories is:",opts:["FIFO inventory system","LIFO inventory system","Weighted inventory system","Perpetual inventory system"],ans:1},
+  {q:"A method of valuing the cost of goods sold that uses the cost of the oldest items in inventory first is:",opts:["FIFO","LIFO","Weighted Average","Specific method"],ans:0},
+  {q:"A method of valuing inventory in which the items acquired last are treated as the ones sold first is:",opts:["FIFO","LIFO","Weighted Average","Specific method"],ans:1},
+  {q:"The operating activities of a business EXCLUDE:",opts:["Borrowing","Purchasing","Marketing","Distribution"],ans:0},
+  {q:"Which of the following will be presented in a direct Cashflow Statement?",opts:["Depreciation expense","Decreases in Prepaid expenses","Loss in disposal of asset","Cash paid to suppliers"],ans:3},
+  {q:"How are NSF checks adjusted in Bank reconciliation statement?",opts:["Deducted from Bank statement balance","Added to Bank statement balance","Deducted from accounting book balance","Added to accounting book balance"],ans:2},
+  {q:"An example of an operating activity is:",opts:["Paying wages","Purchasing office equipment","Borrowing money from a bank","Selling stock"],ans:0},
+  {q:"A company acquires equipment for $75,000 cash. This represents a(n):",opts:["Operating activity","Investing activity","Financing activity","Revenue activity"],ans:1},
+  {q:"Operating activities:",opts:["Are the means organizations use to pay for resources like land, buildings and equipment","Involve using resources to research, develop, purchase, produce, distribute and market products and services","Involve acquiring and disposing of resources that a business uses to acquire and sell its products or services","Are also called asset management"],ans:1},
+  {q:"Income statement and Balance sheet:",opts:["Report effects of cash-relating transactions","Do not explain the changes in cash during the period","Record sources and uses of cash during the period","Are classified into operating, investing and financing activities"],ans:1},
+  {q:"How are interests earned from depositing in bank adjusted in Bank reconciliation statement?",opts:["Deducted from Bank statement balance","Added to Bank statement balance","Deducted from accounting book balance","Added to accounting book balance"],ans:3},
+  {q:"A company borrows $125,000 from the Eastside Bank and receives the loan proceeds in cash. This represents a(n):",opts:["Operating activity","Investing activity","Financing activity","Revenue activity"],ans:2},
+  {q:"Flash had cash inflows from operations $62,500; cash outflows from investing activities of $47,000; and cash inflows from financing of $25,000. The net change in cash was:",opts:["$40,500 increase","$40,500 decrease","$134,500 decrease","$134,000 increase"],ans:0},
+  {q:"An example of an investing activity is:",opts:["Paying wages of employees","Withdrawals by the owner","Purchase of land","Selling inventory"],ans:2},
+  {q:"An example of a financing activity is:",opts:["Buying office supplies","Obtaining a long-term loan","Buying office equipment","Selling inventory"],ans:1},
+  {q:"How are deposits in transit adjusted in Bank reconciliation statement?",opts:["Deducted from Bank statement balance","Added to Bank statement balance","Deducted from accounting book balance","Added to accounting book balance"],ans:1},
+  {q:"Taylor Company uses the direct write-off method. A customer informed Taylor that he would be unable to pay $300 owed to Taylor. Taylor's proper journal entry would be:",opts:["Dr. Uncollectible Accounts Expense 300; Cr. Allowance for Uncollectible Accounts 300","Dr. Allowance for Uncollectible Accounts 300; Cr. Accounts Receivable 300","Dr. Uncollectible Accounts Expense 300; Cr. Accounts Receivable 300","Dr. Revenue 300; Cr. Accounts Receivable 300"],ans:2},
+  {q:"Branz Company had credit sales of $700,000. Historically, 3% of credit sales are uncollectible. Using the allowance method, the proper journal entry to record bad debt expense is:",opts:["Dr. Accounts Receivable 21,000; Cr. Allow. for Uncollectible Accounts 21,000","Dr. Uncollectible Accounts Expense 21,000; Cr. Accounts Receivable 21,000","Dr. Bad debts Expense 21,000; Cr. Allow. for Uncollectible Accounts 21,000","Dr. Allow. for Uncollectible Accounts 21,000; Cr. Accounts Receivable 21,000"],ans:2},
+  {q:"Accountant wrote: Debit Allowance for doubtful account 2,000; Credit Account receivable 2,000. This entry is written to:",opts:["Write off an uncollectible account receivable","Record bad debt expense for the period","Close bad debt expense","Close allowance for doubtful account"],ans:0},
+  {q:"The amount due on the maturity date of a $12,000, 60-day, 8% note receivable is:",opts:["$6,000","$12,000","$160","$12,160"],ans:3},
+  {q:"Newton Company uses the allowance method. On May 3, Newton wrote off the $3,000 uncollectible account of its customer P. Best. The journal entry on May 3 is:",opts:["Dr Allowance for doubtful debts 3,000; Cr Account receivable 3,000","Dr Bad debt expense 3,000; Cr Account receivable 3,000","Dr Bad debt expense 3,000; Cr Allowance for doubtful debt 3,000","Dr Account receivable 3,000; Cr Bad debt expense 3,000"],ans:0},
+  {q:"A company has $20,000 in outstanding accounts receivable. Experience suggests 6% are uncollectible. The current debit balance in allowance for doubtful accounts is $800. The journal entry to record the adjustment includes a debit to Bad Debts Expense for:",opts:["$1,200","$500","$400","$2,000"],ans:3},
+  {q:"Flynn Company uses an allowance method. Flynn determined that $4,000 due from Mitchell will not be collected and should be written off. The entry Flynn should record is:",opts:["Dr. Uncollectible Accounts Expense 4,000; Cr. Accounts Receivable 4,000","Dr. Revenue 4,000; Cr. Accounts Receivable 4,000","Dr. Uncollectible Accounts Expense 4,000; Cr. Allow. for Uncollectible Accounts 4,000","Dr. Allow. for Uncollectible Accounts 4,000; Cr. Accounts Receivable 4,000"],ans:3},
+  {q:"Accounts receivable that may become uncollectable and will be written off are known as:",opts:["Expense","Account receivable","Bad debts","Debts"],ans:2},
+  {q:"Electron borrowed $15,000 cash from TechCom by signing a promissory note. TechCom's entry to record the transaction should include a:",opts:["Debit to Notes Receivable for $15,000","Debit to Accounts Receivable for $15,000","Credit to Notes Receivable for $15,000","Debit Notes Payable for $15,000"],ans:0},
+  {q:"The company has $1,679 credit sales at year end. Experiences show that 4% of credit sales may not be collectable. What is the estimated bad debt expense to be recorded at year end?",opts:["$1,200","$419","$67.16","$100"],ans:2},
+  {q:"Nelson Company purchased equipment on July 1 for $27,500 and decided to depreciate it on the straight-line method over its useful life of five years. Assuming the equipment's salvage value is $3,500, the amount of monthly depreciation expense Nelson should recognize is:",opts:["$2,400","$200","$4,800","$400"],ans:3},
+  {q:"Tangible assets include:",opts:["Vehicle","Equipment","Buildings","All of these"],ans:3},
+  {q:"Which statement is true about tangible asset?",opts:["Tangible assets are assets held for sale","Tangible assets are assets held for operating activity","Tangible assets are assets acquired by loan","Tangible assets are assets that never reduce in value"],ans:1},
+  {q:"A company purchased new computers at a cost of $14,000 on October 1, 2010. Estimated useful life of 4 years and salvage value of $2,000. Using the straight-line method, how much depreciation expense will be recorded for the year ended December 31, 2010?",opts:["$250","$750","$875","$1,000"],ans:1},
+  {q:"A company purchased a plant asset for $45,000. The asset has an estimated salvage value of $6,000, and an estimated useful life of 10 years. The annual depreciation expense using the straight-line method is:",opts:["$3,000 per year","$9,300 per year","$3,600 per year","$3,900 per year"],ans:3},
+  {q:"Something of value that cannot be physically touched, such as a brand, franchise, trademark, or patent is the definition of:",opts:["Tangible assets","Intangible assets","Fixed assets","Current assets"],ans:1},
+  {q:"A company purchased new computers at a cost of $28,000 on January 1, 2010. Estimated useful life of 5 years and salvage value of $3,000. Using straight-line method, how much depreciation expense will be recorded for the year ended December 31, 2010?",opts:["$5,000","$6,000","$3,000","$5,600"],ans:0},
+  {q:"Depreciation is:",opts:["The assigning or allocating of a fixed asset's cost to expense over accounting periods that the asset is likely to be used","The assigning or allocating of a tangible asset's cost to expense over accounting periods that the asset is likely to be used","The assigning or allocating of an intangible asset's cost to expense over accounting periods that the asset is likely to be used","The assigning or allocating of a fixed asset's cost to expense over the accounting periods"],ans:1},
+  {q:"A vehicle had an estimated useful life of 8 years. The vehicle cost $23,000 and its estimated salvage value is $1,500. The depreciation expense using straight line method for a year is:",opts:["$2,687.50","$3,546.50","$2,875.00","$10,750.00"],ans:0},
+  {q:"The value of an asset as it appears on a balance sheet, equal to cost minus accumulated depreciation is definition of:",opts:["Depreciation cost","Asset at cost","Accumulated depreciation","Book value"],ans:3},
+  {q:"Thomas Enterprises purchased a depreciable asset on January 1, 2008 at a cost of $100,000 using straight-line depreciation. The asset is expected to have a salvage value of $15,000 at the end of its five-year useful life. Balance of accumulated depreciation at the end of 2009 is:",opts:["$27,540","$21,600","$34,000","$17,000"],ans:2},
+  {q:"A new photocopy machinery was purchased for $110,000. Additionally it cost $500 for freight and $2,000 for assembling and testing. What is the cost of the machinery to be recorded in accounting book?",opts:["$110,000","$110,500","$112,000","$112,500"],ans:3},
+  {q:"An estimate of an asset's value at the end of its benefit period is called:",opts:["Asset at cost","Book value","Salvage value","Depreciation expense"],ans:2},
+  {q:"Which of the following assets is NOT depreciated?",opts:["Vehicle","Machine","Inventory","Buildings"],ans:2},
+  {q:"Which statement is true about assets that need to depreciate?",opts:["Assets need to depreciate include vehicle, machine, supplies, buildings","Assets need to depreciate include van, machine, supplies, buildings","Assets need to depreciate include machine, supplies, buildings","Assets need to depreciate include vehicle, machine, buildings"],ans:3},
+  {q:"Which statement is true about Depreciation Expense?",opts:["Depreciation Expense is shown on the income statement in order to achieve accounting's matching principle","Depreciation Expense is shown on the balance sheet in order to achieve accounting's matching principle","Depreciation Expense is shown on the income statement","Depreciation Expense is shown on the balance sheet"],ans:0},
+  {q:"Which statement is true about book value?",opts:["Total asset cost plus accumulated depreciation equals book value","Total asset cost minus accumulated depreciation equals book value","Total asset plus depreciation expense equals book value","Total asset minus depreciation expense equals book value"],ans:1},
+  {q:"Book value is equal to: (Choose the CORRECT statement)",opts:["Total asset cost minus depreciation expense","Total asset cost plus depreciation expense","Total asset plus depreciation expense","None of these (correct: Total asset cost minus accumulated depreciation expenses)"],ans:3},
+  {q:"Realistic Company purchased a new truck on January 1, 20X1. The truck cost $20,000, has a four-year life, and a $4,000 residual value. Using the straight-line method, what should Realistic report as the book value of the truck at the end of 20X3?",opts:["$1,600","$4,000","$8,000","$16,000"],ans:2},
+  {q:"A company has a $100,000; 9%; 120 day note payable issued on 6 December. How much of interest payable will be reported in the balance sheet as at 31 December?",opts:["$0 because interest is not yet paid","$625","$360","$450"],ans:1},
+  {q:"Which statement is true about current liabilities?",opts:["Current liabilities include accounts receivable, unearned revenues, and salaries payable","Current liabilities include prepayment, unearned revenues, and salaries payable","Current liabilities include revenue, unearned revenues, and salaries payable","Current liabilities include accounts payable, unearned revenues, and salaries payable"],ans:3},
+  {q:"On 11 December, the company provided service and received $4,400. The service is subject to VAT of 10%. What is the journal entry to record this?",opts:["Dr Cash 4,400; Cr Service revenue 4,400","Dr Cash 4,000; Cr Service revenue 4,000","Dr Cash 4,400; Cr Service revenue 4,000; Cr VAT payable 400","Dr Revenue 4,000; Dr VAT receivable 400; Cr Cash 4,400"],ans:2},
+  {q:"Orange Company purchased equipment on July 1 for $28,500. Estimated useful life of five years and salvage value of $4,500. The amount of monthly depreciation expense is:",opts:["$2,400","$200","$4,800","$400"],ans:3},
+  {q:"A company used straight-line depreciation for equipment that cost $12,000, had a salvage value of $2,000, and a five-year useful life. What is the depreciation expense for one year?",opts:["$1,000","$1,800","$2,400","$2,000"],ans:3},
+  {q:"An employee receives an hourly rate of $25, with time and a half for all hours worked over 40. Hours worked: 46; federal income tax withheld: $350; cumulative earnings prior to current week: $99,700; social security rate: 6.0% on max $100,000; Medicare rate: 1.5%. What is the gross pay?",opts:["$1,225.00","$838.62","$1,075.00","$975.00"],ans:0},
+  {q:"An employee receives hourly rate of $25, time and a half over 40 hours. Hours worked: 46; federal income tax: $350; cumulative prior earnings: $99,700; social security: 6.0% on max $100,000; Medicare: 1.5%. What is the net amount to be paid?",opts:["$838.62","$1,225.00","$875.00","$950.00"],ans:0},
+  {q:"A company has inventory of 20 units at $12 each on August 1. On August 5, purchased 10 units at $13. On August 12, purchased 15 units at $14. On August 15, sold 30 units. Using FIFO periodic inventory method, what is the value of Cost of goods sold on August 15?",opts:["$140","$160","$370","$210"],ans:2},
+  {q:"A company had inventory of 15 units at $20 each on November 1. On November 2, purchased 10 units at $22 each. On November 6, purchased 12 units at $25 each. On November 8, sold 22 units. Using FIFO perpetual inventory method, what was the cost of the 22 units sold?",opts:["$454","$366","$450","$570"],ans:0},
+  {q:"A company has inventory of 15 units at $2 each on August 1. On August 5, purchased 10 units at $3. On August 12, purchased 20 units at $4. On August 15, sold 30 units. Using FIFO perpetual inventory method, what is the value of the inventory at August 15 after the sale?",opts:["$140","$80","$60","$30"],ans:2},
+  {q:"A company had the following purchases: Jan 10 units at $120; Feb 20 units at $130; May 15 units at $140; Sep 12 units at $150; Nov 10 units at $160. On December 31, there were 26 units remaining (2 from Jan, 4 from Feb, 6 from May, 4 from Sep, 10 from Nov). Using the specific identification method, what is the cost of the ending inventory?",opts:["$3,500","$3,800","$3,960","$3,280"],ans:1},
+  {q:"Which of the following inventory costing methods will always result in the same values for ending inventory and COGS regardless of whether a perpetual or periodic inventory system is used?",opts:["FIFO and LIFO","LIFO and weighted-average cost","Specific identification and FIFO","FIFO and weighted-average cost"],ans:2},
+  {q:"If the liabilities of a business increased $75,000 during a period and the owner's equity in the business decreased $30,000 during the same period, the assets of the business must have:",opts:["Decreased $105,000","Decreased $45,000","Increased $30,000","Increased $45,000"],ans:3},
+  {q:"Which of the following is NOT correct regarding the manufacturing overhead budget?",opts:["Total budgeted cash disbursements for manufacturing overhead is equal to the total of budgeted variable and fixed manufacturing overhead","Manufacturing overhead costs should be broken down by cost behavior","The manufacturing overhead budget should provide a schedule of all costs of production other than direct materials and direct labor","A schedule showing budgeted cash disbursements for manufacturing overhead should be prepared for use in developing the cash budget"],ans:0}
+];
+
+let questions = [...ALL_QUESTIONS];
+let currentIdx = 0;
+let answered = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let shuffled = false;
+let wrongOnlyMode = false;
+let wrongIndices = [];
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function shuffleQuestions() {
+  shuffled = !shuffled;
+  const btn = document.getElementById('shuffleBtn');
+  if (shuffled) {
+    questions = shuffle([...ALL_QUESTIONS]);
+    btn.classList.add('active');
+    btn.textContent = '🔀 Đã xáo trộn';
+  } else {
+    questions = [...ALL_QUESTIONS];
+    btn.classList.remove('active');
+    btn.textContent = '🔀 Xáo trộn';
+  }
+  resetStats();
+  renderQuestion();
+}
+
+function toggleMode() {
+  wrongOnlyMode = !wrongOnlyMode;
+  const btn = document.getElementById('modeBtn');
+  if (wrongOnlyMode && wrongIndices.length > 0) {
+    questions = wrongIndices.map(i => ALL_QUESTIONS[i]);
+    btn.classList.add('active');
+    btn.textContent = '📖 Tất cả câu';
+    document.getElementById('totalStat').textContent = questions.length;
+  } else {
+    wrongOnlyMode = false;
+    questions = shuffled ? shuffle([...ALL_QUESTIONS]) : [...ALL_QUESTIONS];
+    btn.classList.remove('active');
+    btn.textContent = '📖 Chỉ câu sai';
+    document.getElementById('totalStat').textContent = ALL_QUESTIONS.length;
+  }
+  resetStats();
+  renderQuestion();
+}
+
+function resetStats() {
+  currentIdx = 0;
+  answered = 0;
+  correctCount = 0;
+  wrongCount = 0;
+  updateStats();
+  document.getElementById('completionScreen').classList.remove('visible');
+  document.getElementById('quizArea').style.display = '';
+}
+
+function resetQuiz() {
+  wrongOnlyMode = false;
+  shuffled = false;
+  questions = [...ALL_QUESTIONS];
+  wrongIndices = [];
+  document.getElementById('shuffleBtn').classList.remove('active');
+  document.getElementById('shuffleBtn').textContent = '🔀 Xáo trộn';
+  document.getElementById('modeBtn').classList.remove('active');
+  document.getElementById('modeBtn').textContent = '📖 Chỉ câu sai';
+  document.getElementById('totalStat').textContent = ALL_QUESTIONS.length;
+  resetStats();
+  renderQuestion();
+}
+
+function updateStats() {
+  document.getElementById('doneStat').textContent = answered;
+  document.getElementById('correctStat').textContent = correctCount;
+  document.getElementById('wrongStat').textContent = wrongCount;
+  const total = questions.length;
+  const pct = total > 0 ? (answered / total * 100).toFixed(1) : 0;
+  document.getElementById('progressText').textContent = `${answered} / ${total}`;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderQuestion() {
+  if (currentIdx >= questions.length) { showCompletion(); return; }
+
+  const q = questions[currentIdx];
+  const total = questions.length;
+  document.getElementById('qNumber').textContent = `CÂU ${currentIdx + 1} / ${total}`;
+  document.getElementById('qText').textContent = q.q;
+
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+
+  const labels = ['A', 'B', 'C', 'D', 'E'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-label">${labels[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => checkAnswer(i, q.ans, btn, q);
+    container.appendChild(btn);
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  const card = document.getElementById('questionCard');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = 'slideIn 0.4s ease';
+}
+
+function checkAnswer(selected, correct, clickedBtn, q) {
+  const allBtns = document.querySelectorAll('.option-btn');
+  allBtns.forEach(b => b.disabled = true);
+  answered++;
+
+  const feedbackEl = document.getElementById('feedback');
+  const titleEl = document.getElementById('feedbackTitle');
+  const bodyEl = document.getElementById('feedbackBody');
+
+  if (selected === correct) {
+    correctCount++;
+    clickedBtn.classList.add('correct');
+    feedbackEl.className = 'feedback correct-fb';
+    feedbackEl.style.display = 'block';
+    titleEl.className = 'feedback-title correct-title';
+    titleEl.textContent = '✅ Chính xác!';
+    const enc = ['Tuyệt vời! Bạn nắm vững khái niệm này rồi!','Xuất sắc! Tiếp tục phát huy nhé!','Đúng rồi! Bạn đang rất ổn đấy!','Perfect! Kiến thức kế toán vững chắc!','Bingo! Bạn hiểu đúng hoàn toàn!'];
+    bodyEl.textContent = enc[Math.floor(Math.random() * enc.length)];
+    spawnParticles();
+  } else {
+    wrongCount++;
+    clickedBtn.classList.add('wrong');
+    allBtns[correct].classList.add('show-correct');
+    feedbackEl.className = 'feedback wrong-fb';
+    feedbackEl.style.display = 'block';
+    titleEl.className = 'feedback-title wrong-title';
+    titleEl.textContent = '❌ Chưa đúng!';
+    const labels = ['A', 'B', 'C', 'D', 'E'];
+    bodyEl.innerHTML = `Đáp án đúng là <strong style="color:var(--correct)">${labels[correct]}. ${q.opts[correct]}</strong>.<br><span style="font-size:12px;color:var(--muted)">Hãy ghi nhớ khái niệm này để không mắc lại lần sau nhé!</span>`;
+    const origIdx = ALL_QUESTIONS.indexOf(q);
+    if (origIdx !== -1 && !wrongIndices.includes(origIdx)) wrongIndices.push(origIdx);
+  }
+
+  updateStats();
+  document.getElementById('nextBtn').className = 'next-btn visible';
+}
+
+function nextQuestion() {
+  currentIdx++;
+  renderQuestion();
+}
+
+function showCompletion() {
+  document.getElementById('quizArea').style.display = 'none';
+  const screen = document.getElementById('completionScreen');
+  screen.classList.add('visible');
+  const total = questions.length;
+  const pct = total > 0 ? Math.round(correctCount / total * 100) : 0;
+  document.getElementById('finalScore').textContent = pct + '%';
+  document.getElementById('finalDetail').textContent = `${correctCount} đúng / ${wrongCount} sai trong tổng số ${total} câu`;
+  for (let i = 0; i < 60; i++) setTimeout(() => spawnParticles(true), i * 30);
+}
+
+function spawnParticles(big = false) {
+  const colors = ['#7c5cfc','#fc5c7d','#22c55e','#f4c430','#38bdf8'];
+  const count = big ? 3 : 1;
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.top = '-20px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    p.style.width = (6 + Math.random() * 8) + 'px';
+    p.style.height = (6 + Math.random() * 8) + 'px';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 4000);
+  }
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
