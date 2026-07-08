@@ -401,15 +401,18 @@ generateBtn.addEventListener('click', async () => {
   audioBlob = null;
 
   try {
+    const encoder = new TextEncoder();
+    const bodyBytes = encoder.encode(text);
+
     const res = await fetch('https://api.fpt.ai/hmi/tts/v5', {
       method: 'POST',
       headers: {
-        'api-key': key,
+        'api-key': key.replace(/[^\x00-\x7F]/g, ''),
         'speed': String(speed),
         'voice': selectedVoice,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: text
+      body: bodyBytes
     });
 
     if (!res.ok) {
